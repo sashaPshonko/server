@@ -25,8 +25,8 @@ spawn-location:
   yaw: 0
   pitch: 0
 
-# Авто-RTP: упал ниже (spawn-location.y + offset). При спавне y=-58 и offset=-3 → порог y=-61
-spawn-rtp-y-offset: -3
+# Авто-RTP: упал ниже этой высоты (Y < -60)
+spawn-rtp-trigger-y: -60
 spawn-rtp-cooldown-ticks: 40
 
 rtp-success-message: "Телепорт в случайное место мира."
