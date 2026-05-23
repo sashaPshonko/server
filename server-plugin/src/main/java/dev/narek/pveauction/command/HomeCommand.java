@@ -35,19 +35,19 @@ public final class HomeCommand implements CommandExecutor {
             Optional<SavedLocation> home = clans.repo().findPlayerHome(player.getUniqueId());
             clans.runSync(player, () -> {
                 if (home.isEmpty()) {
-                    Msg.send(player, Msg.err("Сначала /sethome."));
+                    Msg.server(player, Msg.err("Сначала /sethome."));
                     return;
                 }
                 Location target = home.get().toLocation();
                 if (target == null) {
-                    Msg.send(player, Msg.err("Мир дома не загружен."));
+                    Msg.server(player, Msg.err("Мир дома не загружен."));
                     return;
                 }
                 WorldTeleportService.teleport(plugin, player, target, success -> {
                     if (success) {
-                        Msg.send(player, Msg.ok("Телепорт домой."));
+                        Msg.server(player, Msg.ok("Телепорт домой."));
                     } else {
-                        Msg.send(player, Msg.err("Не удалось телепортироваться."));
+                        Msg.server(player, Msg.err("Не удалось телепортироваться."));
                     }
                 });
             });

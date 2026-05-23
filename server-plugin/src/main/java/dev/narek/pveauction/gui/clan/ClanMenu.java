@@ -88,8 +88,8 @@ public final class ClanMenu implements InventoryHolder {
         }
         if (viewerMember.isOwner()) {
             inventory.setItem(SLOT_SETHOME, GuiItems.button(Material.RED_BED,
-                    Component.text("КЛАН-ДОМ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD),
-                    Component.text("/clan sethome | /clan home", NamedTextColor.GRAY)));
+                    Component.text("БАЗА КЛАНА", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD),
+                    Component.text("/clan sethome | /clan база", NamedTextColor.GRAY)));
         }
 
         inventory.setItem(53, GuiItems.button(Material.SUNFLOWER,
@@ -106,10 +106,13 @@ public final class ClanMenu implements InventoryHolder {
             meta.displayName(Component.text(member.playerName(), NamedTextColor.WHITE, TextDecoration.BOLD));
             meta.lore(List.of(
                     Component.text(role, member.isOwner() ? NamedTextColor.GOLD : NamedTextColor.GRAY),
-                    Component.text("Права: " + ClanService.permLabel(member.permissions()), NamedTextColor.AQUA),
+                    Component.text("Права: " + ClanService.permLabel(member),
+                            member.isOwner() ? NamedTextColor.GOLD : NamedTextColor.AQUA),
                     Component.empty(),
                     Component.text(viewerMember.isOwner() && !member.isOwner()
-                            ? "ЛКМ — настроить права" : " ", NamedTextColor.YELLOW)
+                            ? "ЛКМ — настроить права" : " ", NamedTextColor.YELLOW),
+                    Component.text(viewerMember.isOwner() && !member.isOwner()
+                            ? "Shift+ЛКМ — все / нет прав" : " ", NamedTextColor.GOLD)
             ));
             item.setItemMeta(meta);
         }

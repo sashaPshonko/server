@@ -6,6 +6,7 @@ import dev.narek.pveauction.model.ClanData;
 import dev.narek.pveauction.model.ClanMember;
 import dev.narek.pveauction.model.ClanPermissions;
 import dev.narek.pveauction.util.Msg;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -74,6 +75,10 @@ public final class ClanGuiListener implements Listener {
             if (memberId.equals(player.getUniqueId())) {
                 return;
             }
+            if (event.isShiftClick()) {
+                toggleAllPermissions(player, memberId);
+                return;
+            }
             clans.runAsync(player, ok -> {}, () -> {
                 ClanMember target = clans.repo().findMember(memberId).orElseThrow();
                 if (target.isOwner()) {
@@ -86,7 +91,7 @@ public final class ClanGuiListener implements Listener {
 
         if (raw == ClanMenu.SLOT_INVITE) {
             player.closeInventory();
-            Msg.send(player, Msg.info("Напиши: /clan invite <ник>"));
+            Msg.clan(player, Msg.info("Напиши: /clan invite <ник>"));
         }
     }
 
@@ -122,6 +127,25 @@ public final class ClanGuiListener implements Listener {
         }
     }
 
+    private void toggleAllPermissions(Player player, UUID targetUuid) {
+        clans.runAsync(player, ok -> {
+            if (ok) {
+                openClanMenu(player);
+            }
+        }, () -> {
+            ClanMember viewer = clans.repo().findMember(player.getUniqueId()).orElseThrow();
+            if (!viewer.isOwner()) {
+                throw new IllegalStateException("Только владелец меняет права.");
+            }
+            ClanMember target = clans.repo().findMember(targetUuid).orElseThrow();
+            if (target.isOwner()) {
+                throw new IllegalStateException("Нельзя менять права владельца.");
+            }
+            int newMask = target.permissions() == 0 ? ClanPermissions.ALL : 0;
+            clans.repo().setPermissions(targetUuid, newMask);
+        });
+    }
+
     private void savePerms(Player player, ClanMemberPermMenu menu) {
         clans.runAsync(player, ok -> {}, () -> {
             ClanMember viewer = clans.repo().findMember(player.getUniqueId()).orElseThrow();
@@ -151,15 +175,15 @@ public final class ClanGuiListener implements Listener {
         }
         UUID targetUuid = menu.targetUuid();
         if (targetUuid == null) {
-            Msg.send(player, Msg.err("Ошибка: игрок не найден."));
+            Msg.clan(player, Msg.err("Ошибка: игрок не найден."));
             return;
         }
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.warn("Игрок исключён из клана."));
+                Msg.clan(player, Msg.warn("Игрок исключён из клана."));
                 Player kicked = Bukkit.getPlayer(targetUuid);
                 if (kicked != null) {
-                    Msg.send(kicked, Msg.err("Тебя исключили из клана."));
+                    Msg.clan(kicked, Msg.err("Тебя исключили из клана."));
                     plugin.scoreboardListener().refresh(kicked);
                 }
                 openClanMenu(player);
@@ -176,7 +200,11 @@ public final class ClanGuiListener implements Listener {
             if (target.isOwner()) {
                 throw new IllegalStateException("Нельзя кикнуть владельца.");
             }
+            int clanId = actor.clanId();
+            String targetName = target.playerName();
             clans.repo().removeMember(targetUuid);
+            clans.notifyClan(clanId, targetUuid,
+                    Msg.warn(targetName + " исключён из клана."));
         });
     }
 
@@ -203,6 +231,7 @@ public final class ClanGuiListener implements Listener {
         switch (menu.action()) {
             case LEAVE -> confirmLeave(player);
             case DISBAND -> confirmDisband(player);
+            case SET_HOME -> confirmSetHome(player);
             case DEL_HOME -> confirmDelHome(player);
         }
     }
@@ -211,7 +240,7 @@ public final class ClanGuiListener implements Listener {
         clans.runAsync(player, ok -> {
             if (ok) {
                 player.closeInventory();
-                Msg.send(player, Msg.warn("Ты покинул клан."));
+                Msg.clan(player, Msg.warn("Ты покинул клан."));
                 plugin.scoreboardListener().refresh(player);
             }
         }, () -> {
@@ -219,7 +248,10 @@ public final class ClanGuiListener implements Listener {
             if (member.isOwner()) {
                 throw new IllegalStateException("Владелец не может выйти — используй /clan disband.");
             }
+            int clanId = member.clanId();
+            String name = player.getName();
             clans.repo().removeMember(player.getUniqueId());
+            clans.notifyClan(clanId, player.getUniqueId(), Msg.warn(name + " покинул клан."));
         });
     }
 
@@ -227,7 +259,7 @@ public final class ClanGuiListener implements Listener {
         clans.runAsync(player, ok -> {
             if (ok) {
                 player.closeInventory();
-                Msg.send(player, Msg.warn("Клан расформирован."));
+                Msg.clan(player, Msg.warn("Клан расформирован."));
                 plugin.scoreboardListener().refresh(player);
             }
         }, () -> {
@@ -237,15 +269,15 @@ public final class ClanGuiListener implements Listener {
             }
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
             String clanName = clan.name();
-            List<UUID> former = clans.repo().disbandClan(member.clanId());
+            int clanId = member.clanId();
+            String ownerName = player.getName();
+            List<UUID> former = clans.repo().disbandClan(clanId);
+            Component notice = Msg.err(ownerName + " расформировал клан «" + clanName + "».");
             clans.runSync(player, () -> {
                 for (UUID uuid : former) {
-                    if (uuid.equals(player.getUniqueId())) {
-                        continue;
-                    }
                     Player online = Bukkit.getPlayer(uuid);
                     if (online != null) {
-                        Msg.send(online, Msg.err("Клан «" + clanName + "» расформирован."));
+                        Msg.clan(online, notice);
                         plugin.scoreboardListener().refresh(online);
                     }
                 }
@@ -253,21 +285,36 @@ public final class ClanGuiListener implements Listener {
         });
     }
 
+    private void confirmSetHome(Player player) {
+        clans.runAsync(player, ok -> {
+            if (ok) {
+                player.closeInventory();
+                Msg.clan(player, Msg.ok("База клана установлена."));
+            }
+        }, () -> {
+            ClanMember member = clans.repo().findMember(player.getUniqueId()).orElseThrow();
+            if (!member.isOwner()) {
+                throw new IllegalStateException("Только владелец может ставить базу клана.");
+            }
+            clans.repo().setClanHome(member.clanId(), player.getLocation());
+        });
+    }
+
     private void confirmDelHome(Player player) {
         clans.runAsync(player, ok -> {
             if (ok) {
                 player.closeInventory();
-                Msg.send(player, Msg.ok("Клановый дом удалён."));
+                Msg.clan(player, Msg.ok("База клана удалена."));
                 openClanMenu(player);
             }
         }, () -> {
             ClanMember member = clans.repo().findMember(player.getUniqueId()).orElseThrow();
             if (!member.isOwner()) {
-                throw new IllegalStateException("Только владелец может удалить клановый дом.");
+                throw new IllegalStateException("Только владелец может удалить базу клана.");
             }
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
             if (!clan.hasHome()) {
-                throw new IllegalStateException("Клановый дом не установлен.");
+                throw new IllegalStateException("База клана не установлена.");
             }
             clans.repo().clearClanHome(member.clanId());
         });

@@ -8,19 +8,43 @@ import org.bukkit.entity.Player;
 
 public final class Msg {
 
-    private static final Component PREFIX = Component.text("✦ ", NamedTextColor.LIGHT_PURPLE)
-            .append(Component.text("АУКЦИОН ", NamedTextColor.AQUA, TextDecoration.BOLD))
-            .append(Component.text("» ", NamedTextColor.DARK_GRAY));
+    private static final Component PREFIX_AUCTION = prefix("АУКЦИОН", NamedTextColor.AQUA);
+    private static final Component PREFIX_CLAN = prefix("КЛАН", NamedTextColor.GOLD);
+    private static final Component PREFIX_PAY = prefix("ПЕРЕВОД", NamedTextColor.GREEN);
+    private static final Component PREFIX_SERVER = prefix("4NAREK", NamedTextColor.YELLOW);
 
     private Msg() {}
 
+    private static Component prefix(String label, NamedTextColor labelColor) {
+        return Component.text("✦ ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(label + " ", labelColor, TextDecoration.BOLD))
+                .append(Component.text("» ", NamedTextColor.DARK_GRAY));
+    }
+
+    /** Сообщения аукциона (/ah, GUI лотов). */
     public static void send(Player player, Component body) {
-        player.sendMessage(PREFIX.append(body));
+        auction(player, body);
+    }
+
+    public static void auction(Player player, Component body) {
+        player.sendMessage(PREFIX_AUCTION.append(body));
+    }
+
+    public static void clan(Player player, Component body) {
+        player.sendMessage(PREFIX_CLAN.append(body));
+    }
+
+    public static void pay(Player player, Component body) {
+        player.sendMessage(PREFIX_PAY.append(body));
+    }
+
+    public static void server(Player player, Component body) {
+        player.sendMessage(PREFIX_SERVER.append(body));
     }
 
     public static void send(CommandSender sender, Component body) {
         if (sender instanceof Player player) {
-            send(player, body);
+            auction(player, body);
         } else {
             sender.sendMessage(Component.text("[Аукцион] ").append(body));
         }

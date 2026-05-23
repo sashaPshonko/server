@@ -2,7 +2,7 @@ package dev.narek.pveauction.command;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.clan.ClanService;
-import dev.narek.pveauction.util.GuiItems;
+import dev.narek.pveauction.util.MoneyAmounts;
 import dev.narek.pveauction.util.Msg;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -33,56 +33,52 @@ public final class PayCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (!plugin.economy().isEnabled()) {
-            Msg.send(player, Msg.err("Экономика не подключена."));
+            Msg.pay(player, Msg.err("Экономика не подключена."));
             return true;
         }
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /pay <ник> <сумма>"));
+            Msg.pay(player, Msg.err("Использование: /pay <ник> <сумма>"));
             return true;
         }
+
+        long max = plugin.maxMoneyAmount();
+        MoneyAmounts.ParseResult parsed = MoneyAmounts.parse(args[1], max);
+        if (!parsed.ok()) {
+            Msg.pay(player, Msg.err(parsed.error()));
+            return true;
+        }
+        long amount = parsed.amount();
 
         String targetName = args[0];
-        long amount;
-        try {
-            amount = ClanService.parseAmount(args[1]);
-            ClanService.validateAmount(amount);
-        } catch (NumberFormatException e) {
-            Msg.send(player, Msg.err("Неверная сумма."));
-            return true;
-        } catch (IllegalStateException e) {
-            Msg.send(player, Msg.err(e.getMessage()));
-            return true;
-        }
-
         if (targetName.equalsIgnoreCase(player.getName())) {
-            Msg.send(player, Msg.err("Нельзя перевести себе."));
+            Msg.pay(player, Msg.err("Нельзя перевести себе."));
             return true;
         }
 
         Player target = clans.findOnline(targetName);
         if (target == null) {
-            Msg.send(player, Msg.err("Игрок должен быть онлайн."));
+            Msg.pay(player, Msg.err("Игрок должен быть онлайн."));
             return true;
         }
 
         if (!plugin.economy().has(player, amount)) {
-            Msg.send(player, Msg.err("Не хватает денег."));
+            Msg.pay(player, Msg.err("Не хватает денег."));
             return true;
         }
 
         if (!plugin.economy().withdraw(player, amount)) {
-            Msg.send(player, Msg.err("Не удалось списать деньги."));
+            Msg.pay(player, Msg.err("Не удалось списать деньги."));
             return true;
         }
         if (!plugin.economy().deposit(target, amount)) {
             plugin.economy().deposit(player, amount);
-            Msg.send(player, Msg.err("Не удалось перевести."));
+            Msg.pay(player, Msg.err("Не удалось перевести."));
             return true;
         }
 
-        Msg.send(player, Msg.ok("Переведено ").append(Msg.money(amount))
+        Msg.pay(player, Msg.ok("Переведено ").append(Msg.money(amount))
                 .append(Msg.ok(" → " + target.getName())));
-        Msg.send(target, Msg.info("Получено ").append(Msg.money(amount))
+        Msg.pay(target, Msg.info("Получено ").append(Msg.money(amount))
                 .append(Msg.info(" от " + player.getName())));
         return true;
     }

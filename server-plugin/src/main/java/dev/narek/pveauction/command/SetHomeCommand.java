@@ -29,12 +29,12 @@ public final class SetHomeCommand implements CommandExecutor {
             return true;
         }
         if (worlds.isSpawnWorld(player.getWorld())) {
-            Msg.send(player, Msg.err("На спавне нельзя ставить дом."));
+            Msg.server(player, Msg.err("На спавне нельзя ставить дом."));
             return true;
         }
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Дом установлен."));
+                Msg.server(player, Msg.ok("Дом установлен."));
             }
         }, () -> {
             clans.ensureProfile(player.getUniqueId(), player.getName());

@@ -43,10 +43,8 @@ public final class ClanKickConfirmMenu implements InventoryHolder {
         for (int i = 0; i < 27; i++) {
             inventory.setItem(i, glass);
         }
-        inventory.setItem(13, GuiItems.button(Material.PLAYER_HEAD,
-                Component.text("Исключить " + targetName + "?", NamedTextColor.WHITE, TextDecoration.BOLD)));
         inventory.setItem(SLOT_CONFIRM, GuiItems.button(Material.LIME_WOOL,
-                Component.text("ДА, ИСКЛЮЧИТЬ", NamedTextColor.GREEN, TextDecoration.BOLD)));
+                Component.text("ДА, ИСКЛЮЧИТЬ " + targetName, NamedTextColor.GREEN, TextDecoration.BOLD)));
         inventory.setItem(SLOT_CANCEL, GuiItems.button(Material.RED_WOOL,
                 Component.text("ОТМЕНА", NamedTextColor.RED, TextDecoration.BOLD)));
     }

@@ -1,10 +1,12 @@
 package dev.narek.pveauction.clan;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.chat.ChatService;
 import dev.narek.pveauction.db.ClanRepository;
+import dev.narek.pveauction.model.ClanData;
+import dev.narek.pveauction.model.PlayerProfile;
 import dev.narek.pveauction.model.ClanMember;
 import dev.narek.pveauction.model.ClanPermissions;
-import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.Msg;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -13,8 +15,10 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -36,16 +40,68 @@ public final class ClanService {
             } catch (SQLException e) {
                 plugin.getLogger().severe(e.getMessage());
                 runSync(player, () -> {
-                    Msg.send(player, Msg.err("Ошибка базы данных."));
+                    Msg.clan(player, Msg.err("Ошибка базы данных."));
                     onDone.accept(false);
                 });
             } catch (IllegalStateException e) {
                 runSync(player, () -> {
-                    Msg.send(player, Msg.err(e.getMessage()));
+                    Msg.clan(player, Msg.err(e.getMessage()));
                     onDone.accept(false);
                 });
             }
         });
+    }
+
+    public void notifyClan(int clanId, @Nullable UUID exclude, Component body) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            try {
+                for (ClanMember m : clans.listMembers(clanId)) {
+                    if (exclude != null && m.playerUuid().equals(exclude)) {
+                        continue;
+                    }
+                    Player online = Bukkit.getPlayer(m.playerUuid());
+                    if (online != null) {
+                        Msg.clan(online, body);
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe(e.getMessage());
+            }
+        });
+    }
+
+    public void refreshClanOnline(int clanId) {
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            try {
+                for (ClanMember m : clans.listMembers(clanId)) {
+                    Player online = Bukkit.getPlayer(m.playerUuid());
+                    if (online != null) {
+                        plugin.scoreboardListener().refresh(online);
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe(e.getMessage());
+            }
+        });
+    }
+
+    public void sendClanChat(Player sender, ClanMember member, ClanData clan, PlayerProfile profile, String text) {
+        Component line = plugin.chat().formatClanLine(
+                profile,
+                new ChatService.ClanMemberParts(clan.name(), sender.getName(), member.isOwner()),
+                text);
+
+        try {
+            for (ClanMember m : clans.listMembers(clan.id())) {
+                Player online = Bukkit.getPlayer(m.playerUuid());
+                if (online != null) {
+                    online.sendMessage(line);
+                }
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().severe(e.getMessage());
+            Msg.clan(sender, Msg.err("Ошибка чата клана."));
+        }
     }
 
     public void runSync(Player player, Runnable task) {
@@ -67,6 +123,13 @@ public final class ClanService {
         target.sendMessage(Component.text("  ").append(accept).append(deny));
     }
 
+    public static String permLabel(ClanMember member) {
+        if (member.isOwner()) {
+            return "все права";
+        }
+        return permLabel(member.permissions());
+    }
+
     public static String permLabel(int mask) {
         StringBuilder sb = new StringBuilder();
         if (ClanPermissions.has(mask, ClanPermissions.INVITE)) {
@@ -82,21 +145,6 @@ public final class ClanService {
             return "нет прав";
         }
         return sb.toString().trim();
-    }
-
-    public static long parseAmount(String raw) {
-        return Long.parseLong(raw.replace(" ", "").replace("_", ""));
-    }
-
-    public static void validateAmount(long amount) {
-        long min = 1;
-        long max = 1_000_000_000L;
-        if (amount < min) {
-            throw new IllegalStateException("Сумма должна быть больше нуля.");
-        }
-        if (amount > max) {
-            throw new IllegalStateException("Максимум: " + GuiItems.formatPrice(max) + " $");
-        }
     }
 
     public ClanRepository repo() {

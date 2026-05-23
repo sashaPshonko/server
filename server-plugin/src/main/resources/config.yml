@@ -5,6 +5,11 @@ scoreboard:
   indent: "  "
   update-ticks: 40
 
+# Чат: локальный радиус (блоки), мировой — сообщение с «!» в начале
+chat:
+  enabled: true
+  local-radius: 100
+
 # Клан: время жизни приглашения (секунды)
 clan:
   invite-ttl-seconds: 120
@@ -20,6 +25,9 @@ auction-expiry-hours: 12
 
 # Максимальная цена продажи (/ah sell)
 auction-max-price: 100000000
+
+# Максимальная сумма перевода и операций с казной клана
+money-max-amount: 100000000
 
 # --- Миры: спавн (карта) и RTP (обычный выживание 1000×1000) ---
 spawn-world: world

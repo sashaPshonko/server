@@ -11,6 +11,7 @@ import dev.narek.pveauction.model.ClanMember;
 import dev.narek.pveauction.model.ClanPermissions;
 import dev.narek.pveauction.model.ClanRole;
 import dev.narek.pveauction.util.GuiItems;
+import dev.narek.pveauction.util.MoneyAmounts;
 import dev.narek.pveauction.util.Msg;
 import dev.narek.pveauction.world.WorldTeleportService;
 import org.bukkit.command.Command;
@@ -46,7 +47,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 0) {
-            Msg.send(player, Msg.info("Команды: create, menu, invite, accept, deny, kick, leave, disband, money, invest, withdraw, sethome, delhome, home"));
+            Msg.clan(player, Msg.info("Команды: create, menu, invite, accept, deny, kick, leave, disband, chat, money, invest, withdraw, sethome, delhome, база"));
             return true;
         }
 
@@ -63,11 +64,12 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
             case "withdraw", "take" -> handleWithdraw(player, args);
             case "sethome" -> handleSetHome(player);
             case "delhome" -> handleDelHome(player);
-            case "home" -> handleHome(player);
+            case "home", "база" -> handleHome(player);
             case "leave" -> handleLeave(player);
             case "disband" -> handleDisband(player);
+            case "chat", "c" -> handleChat(player, args);
             default -> {
-                Msg.send(player, Msg.err("Неизвестная подкоманда."));
+                Msg.clan(player, Msg.err("Неизвестная подкоманда."));
                 yield true;
             }
         };
@@ -75,17 +77,17 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleCreate(Player player, String[] args) {
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /clan create <название>"));
+            Msg.clan(player, Msg.err("Использование: /clan create <название>"));
             return true;
         }
         String name = args[1].trim();
         if (name.length() < 3 || name.length() > 16) {
-            Msg.send(player, Msg.err("Название: 3–16 символов."));
+            Msg.clan(player, Msg.err("Название: 3–16 символов."));
             return true;
         }
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Клан «" + name + "» создан."));
+                Msg.clan(player, Msg.ok("Клан «" + name + "» создан."));
                 plugin.scoreboardListener().refresh(player);
             }
         }, () -> {
@@ -115,13 +117,13 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleInvite(Player player, String[] args) {
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /clan invite <ник>"));
+            Msg.clan(player, Msg.err("Использование: /clan invite <ник>"));
             return true;
         }
         String targetName = args[1];
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Приглашение отправлено."));
+                Msg.clan(player, Msg.ok("Приглашение отправлено."));
             }
         }, () -> {
             ClanMember member = requireMember(player);
@@ -147,7 +149,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     private boolean handleAccept(Player player) {
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Ты вступил в клан."));
+                Msg.clan(player, Msg.ok("Ты вступил в клан."));
                 plugin.scoreboardListener().refresh(player);
             }
         }, () -> {
@@ -160,6 +162,33 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
             clans.repo().addMember(invite.clanId(), player.getUniqueId(), ClanRole.MEMBER, 0);
             clans.repo().deleteInvite(invite.id());
             clans.repo().deleteInvitesForTarget(player.getUniqueId());
+            String joiner = player.getName();
+            int clanId = invite.clanId();
+            clans.notifyClan(clanId, player.getUniqueId(), Msg.ok(joiner + " вступил в клан."));
+            clans.refreshClanOnline(clanId);
+        });
+        return true;
+    }
+
+    private boolean handleChat(Player player, String[] args) {
+        if (args.length < 2) {
+            Msg.clan(player, Msg.err("Использование: /clan chat <сообщение>"));
+            return true;
+        }
+        String message = String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)).trim();
+        if (message.isEmpty()) {
+            Msg.clan(player, Msg.err("Сообщение не может быть пустым."));
+            return true;
+        }
+        if (message.length() > 256) {
+            Msg.clan(player, Msg.err("Слишком длинное сообщение (макс. 256)."));
+            return true;
+        }
+        clans.runAsync(player, ok -> {}, () -> {
+            ClanMember member = requireMember(player);
+            ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
+            var profile = plugin.players().getOrCreate(player.getUniqueId(), player.getName());
+            clans.runSync(player, () -> clans.sendClanChat(player, member, clan, profile, message));
         });
         return true;
     }
@@ -167,7 +196,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     private boolean handleDeny(Player player) {
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.warn("Приглашение отклонено."));
+                Msg.clan(player, Msg.warn("Приглашение отклонено."));
             }
         }, () -> clans.repo().deleteInvitesForTarget(player.getUniqueId()));
         return true;
@@ -175,7 +204,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleKick(Player player, String[] args) {
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /clan kick <ник>"));
+            Msg.clan(player, Msg.err("Использование: /clan kick <ник>"));
             return true;
         }
         String targetName = args[1];
@@ -201,7 +230,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
             ClanMember member = requireMember(player);
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
             long balance = clan.balance();
-            clans.runSync(player, () -> Msg.send(player, Msg.info("Казна клана «" + clan.name() + "»: ")
+            clans.runSync(player, () -> Msg.clan(player, Msg.info("Казна клана «" + clan.name() + "»: ")
                     .append(Msg.money(balance))));
         });
         return true;
@@ -209,17 +238,23 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
     private boolean handleInvest(Player player, String[] args) {
         if (!plugin.economy().isEnabled()) {
-            Msg.send(player, Msg.err("Экономика не подключена."));
+            Msg.clan(player, Msg.err("Экономика не подключена."));
             return true;
         }
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /clan invest <сумма>"));
+            Msg.clan(player, Msg.err("Использование: /clan invest <сумма>"));
             return true;
         }
-        long amount = parseAmount(player, args[1]);
+        long max = plugin.maxMoneyAmount();
+        MoneyAmounts.ParseResult parsed = MoneyAmounts.parse(args[1], max);
+        if (!parsed.ok()) {
+            Msg.clan(player, Msg.err(parsed.error()));
+            return true;
+        }
+        long amount = parsed.amount();
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Вложено в клан ").append(Msg.money(amount)));
+                Msg.clan(player, Msg.ok("Вложено в клан ").append(Msg.money(amount)));
             }
         }, () -> {
             ClanMember member = requireMember(player);
@@ -227,31 +262,45 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
                 throw new IllegalStateException("Не хватает денег.");
             }
             if (!plugin.economy().withdraw(player, amount)) {
-                throw new IllegalStateException("Не удалось списать.");
+                throw new IllegalStateException("Не удалось списать деньги.");
             }
             clans.repo().addBalance(member.clanId(), amount);
+            String name = player.getName();
+            int clanId = member.clanId();
+            clans.notifyClan(clanId, player.getUniqueId(),
+                    Msg.info(name + " вложил в казну ").append(Msg.money(amount)));
         });
         return true;
     }
 
     private boolean handleWithdraw(Player player, String[] args) {
         if (!plugin.economy().isEnabled()) {
-            Msg.send(player, Msg.err("Экономика не подключена."));
+            Msg.clan(player, Msg.err("Экономика не подключена."));
             return true;
         }
         if (args.length < 2) {
-            Msg.send(player, Msg.err("Использование: /clan withdraw <сумма>"));
+            Msg.clan(player, Msg.err("Использование: /clan withdraw <сумма>"));
             return true;
         }
-        long amount = parseAmount(player, args[1]);
+        long max = plugin.maxMoneyAmount();
+        MoneyAmounts.ParseResult parsed = MoneyAmounts.parse(args[1], max);
+        if (!parsed.ok()) {
+            Msg.clan(player, Msg.err(parsed.error()));
+            return true;
+        }
+        long amount = parsed.amount();
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.send(player, Msg.ok("Снято из клана ").append(Msg.money(amount)));
+                Msg.clan(player, Msg.ok("Снято из клана ").append(Msg.money(amount)));
             }
         }, () -> {
             ClanMember member = requireMember(player);
             if (!member.can(ClanPermissions.WITHDRAW)) {
                 throw new IllegalStateException("Нет права снимать деньги.");
+            }
+            ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
+            if (clan.balance() < amount) {
+                throw new IllegalStateException("В казне только " + GuiItems.formatPrice(clan.balance()) + " $.");
             }
             if (!clans.repo().withdrawBalance(member.clanId(), amount)) {
                 throw new IllegalStateException("В казне недостаточно средств.");
@@ -260,6 +309,10 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
                 clans.repo().addBalance(member.clanId(), amount);
                 throw new IllegalStateException("Не удалось выдать деньги.");
             }
+            String name = player.getName();
+            int clanId = member.clanId();
+            clans.notifyClan(clanId, player.getUniqueId(),
+                    Msg.warn(name + " снял из казны ").append(Msg.money(amount)));
         });
         return true;
     }
@@ -287,11 +340,11 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         clans.runAsync(player, ok -> {}, () -> {
             ClanMember member = requireMember(player);
             if (!member.isOwner()) {
-                throw new IllegalStateException("Только владелец может удалить клановый дом.");
+                throw new IllegalStateException("Только владелец может удалить базу клана.");
             }
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
             if (!clan.hasHome()) {
-                throw new IllegalStateException("Клановый дом не установлен.");
+                throw new IllegalStateException("База клана не установлена.");
             }
             clans.runSync(player, () -> ClanActionConfirmMenu.open(player, ClanActionConfirmMenu.Action.DEL_HOME));
         });
@@ -299,16 +352,12 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleSetHome(Player player) {
-        clans.runAsync(player, ok -> {
-            if (ok) {
-                Msg.send(player, Msg.ok("Клановый дом установлен."));
-            }
-        }, () -> {
+        clans.runAsync(player, ok -> {}, () -> {
             ClanMember member = requireMember(player);
             if (!member.isOwner()) {
-                throw new IllegalStateException("Только владелец может ставить клановый дом.");
+                throw new IllegalStateException("Только владелец может ставить базу клана.");
             }
-            clans.repo().setClanHome(member.clanId(), player.getLocation());
+            clans.runSync(player, () -> ClanActionConfirmMenu.open(player, ClanActionConfirmMenu.Action.SET_HOME));
         });
         return true;
     }
@@ -318,17 +367,17 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
             ClanMember member = requireMember(player);
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
             if (!clan.hasHome()) {
-                throw new IllegalStateException("Клановый дом не установлен.");
+                throw new IllegalStateException("База клана не установлена.");
             }
             var loc = clan.homeLocation();
             if (loc == null) {
-                throw new IllegalStateException("Мир кланового дома не загружен.");
+                throw new IllegalStateException("Мир базы клана не загружен.");
             }
             clans.runSync(player, () -> WorldTeleportService.teleport(plugin, player, loc, success -> {
                 if (success) {
-                    Msg.send(player, Msg.ok("Телепорт в клановый дом."));
+                    Msg.clan(player, Msg.ok("Телепорт на базу клана."));
                 } else {
-                    Msg.send(player, Msg.err("Не удалось телепортироваться."));
+                    Msg.clan(player, Msg.err("Не удалось телепортироваться."));
                 }
             }));
         });
@@ -349,16 +398,6 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         throw new IllegalStateException("Участник не найден в клане.");
     }
 
-    private long parseAmount(Player player, String raw) {
-        try {
-            long amount = ClanService.parseAmount(raw);
-            ClanService.validateAmount(amount);
-            return amount;
-        } catch (NumberFormatException e) {
-            throw new IllegalStateException("Неверная сумма.");
-        }
-    }
-
     @Override
     public @Nullable List<String> onTabComplete(
             @NotNull CommandSender sender,
@@ -368,8 +407,8 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     ) {
         if (args.length == 1) {
             return filter(args[0],
-                    "create", "menu", "invite", "accept", "deny", "kick", "leave", "disband",
-                    "money", "invest", "withdraw", "sethome", "delhome", "home");
+                    "create", "menu", "invite", "accept", "deny", "kick", "leave", "disband", "chat",
+                    "money", "invest", "withdraw", "sethome", "delhome", "база", "home");
         }
         if (args.length == 2 && (args[0].equalsIgnoreCase("invite") || args[0].equalsIgnoreCase("kick"))) {
             List<String> out = new ArrayList<>();

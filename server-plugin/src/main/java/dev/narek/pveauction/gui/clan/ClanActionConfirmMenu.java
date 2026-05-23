@@ -17,7 +17,8 @@ public final class ClanActionConfirmMenu implements InventoryHolder {
     public enum Action {
         LEAVE("Покинуть клан?", NamedTextColor.YELLOW, "ПОКИНУТЬ", Material.LIME_WOOL),
         DISBAND("Расформировать клан?", NamedTextColor.RED, "РАСФОРМИРОВАТЬ", Material.TNT),
-        DEL_HOME("Удалить клановый дом?", NamedTextColor.GOLD, "УДАЛИТЬ ДОМ", Material.BARRIER);
+        SET_HOME("Установить базу клана?", NamedTextColor.LIGHT_PURPLE, "УСТАНОВИТЬ", Material.RED_BED),
+        DEL_HOME("Удалить базу клана?", NamedTextColor.GOLD, "УДАЛИТЬ", Material.BARRIER);
 
         private final String title;
         private final NamedTextColor color;
@@ -57,8 +58,6 @@ public final class ClanActionConfirmMenu implements InventoryHolder {
         for (int i = 0; i < 27; i++) {
             inventory.setItem(i, glass);
         }
-        inventory.setItem(13, GuiItems.button(Material.PAPER,
-                Component.text(action.title, NamedTextColor.WHITE, TextDecoration.BOLD)));
         inventory.setItem(SLOT_CONFIRM, GuiItems.button(action.confirmMaterial,
                 Component.text("ДА, " + action.confirmLabel, NamedTextColor.GREEN, TextDecoration.BOLD)));
         inventory.setItem(SLOT_CANCEL, GuiItems.button(Material.RED_WOOL,

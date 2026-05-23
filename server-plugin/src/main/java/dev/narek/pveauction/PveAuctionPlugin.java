@@ -1,6 +1,8 @@
 package dev.narek.pveauction;
 
+import dev.narek.pveauction.chat.ChatService;
 import dev.narek.pveauction.clan.ClanService;
+import dev.narek.pveauction.listener.ChatListener;
 import dev.narek.pveauction.command.AhAdminCommand;
 import dev.narek.pveauction.command.AhCommand;
 import dev.narek.pveauction.command.ClanCommand;
@@ -33,6 +35,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
     private PlayerRepository playerRepository;
     private ClanRepository clanRepository;
     private ClanService clanService;
+    private ChatService chatService;
     private EconomyService economyService;
     private WorldTravelService worldTravelService;
     private ScoreboardService scoreboardService;
@@ -57,6 +60,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
         clanRepository = new ClanRepository(this);
         clanRepository.init();
         clanService = new ClanService(this, clanRepository);
+        chatService = new ChatService(this);
 
         scoreboardService = new ScoreboardService(this);
         scoreboardListener = new ScoreboardListener(this, scoreboardService);
@@ -72,6 +76,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
         getServer().getPluginManager().registerEvents(scoreboardListener, this);
+        getServer().getPluginManager().registerEvents(new ChatListener(this, chatService), this);
 
         long sbTicks = getConfig().getLong("scoreboard.update-ticks", 40L);
         getServer().getScheduler().runTaskTimer(this, scoreboardListener::refreshAll, sbTicks, sbTicks);
@@ -160,6 +165,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         return clanService;
     }
 
+    public ChatService chat() {
+        return chatService;
+    }
+
     public EconomyService economy() {
         return economyService;
     }
@@ -174,6 +183,11 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     public long maxAuctionPrice() {
         return getConfig().getLong("auction-max-price", 100_000_000L);
+    }
+
+    /** Лимит для /pay, /clan invest, /clan withdraw */
+    public long maxMoneyAmount() {
+        return getConfig().getLong("money-max-amount", maxAuctionPrice());
     }
 
     public long relistCooldownMs() {
