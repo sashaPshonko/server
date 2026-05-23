@@ -14,9 +14,11 @@ curl -fL#o plugins/Vault.jar "${VAULT_URL}"
 echo "==> EssentialsX"
 curl -fL#o plugins/EssentialsX-2.21.2.jar "${ESS_URL}"
 
-echo "==> EssentialsXSpawn (/spawn, спавн при входе)"
+echo "==> EssentialsXSpawn (только экономика; /spawn — в PveAuction)"
 curl -fL#o plugins/EssentialsXSpawn-2.21.2.jar "${SPAWN_URL}"
 
 echo ""
 echo "Готово: Vault, EssentialsX, EssentialsXSpawn в plugins/"
 echo "Перезапусти сервер. В логе PveAuction: «Экономика Vault подключена»."
+echo ""
+echo "Важно: отключи Essentials /spawn — см. config-templates/essentials-spawn.txt"

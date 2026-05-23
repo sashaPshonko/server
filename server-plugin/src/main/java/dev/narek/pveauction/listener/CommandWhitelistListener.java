@@ -1,7 +1,5 @@
 package dev.narek.pveauction.listener;
 
-import dev.narek.pveauction.util.Msg;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,7 +10,7 @@ import java.util.Set;
 
 public final class CommandWhitelistListener implements Listener {
 
-    private static final Set<String> ALLOWED = Set.of("ah", "admin");
+    private static final Set<String> ALLOWED = Set.of("ah", "admin", "rtp", "spawn");
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCommand(PlayerCommandPreprocessEvent event) {
@@ -29,6 +27,5 @@ public final class CommandWhitelistListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        Msg.send(event.getPlayer(), Msg.err("Доступны только /ah и /admin."));
     }
 }

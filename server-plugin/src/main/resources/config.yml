@@ -3,3 +3,34 @@ max-active-lots: 5
 
 # Перевыставить в хранилище (секунды)
 relist-cooldown-seconds: 60
+
+# --- Миры: спавн (карта) и RTP (обычный выживание 1000×1000) ---
+spawn-world: world
+rtp-world: rtp
+rtp-world-size: 1000
+
+# При входе — на спавн
+teleport-to-spawn-on-join: true
+
+# Спавн: /spawn и вход
+spawn-location:
+  world: world
+  x: 8.5
+  y: -58
+  z: 8.5
+  yaw: 0
+  pitch: 0
+
+# RTP: /rtp и портал обратно (шаг в зону 8 -62 -19)
+rtp-location:
+  world: rtp
+  x: 8.5
+  y: -62
+  z: -19.5
+  yaw: 0
+  pitch: 0
+
+rtp-portal-radius: 2.0
+
+# /rtp только с карты спавна
+rtp-only-from-spawn-world: true

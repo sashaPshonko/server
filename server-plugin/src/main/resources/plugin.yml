@@ -13,6 +13,12 @@ commands:
   admin:
     description: Админка сервера
     usage: /admin [give <ник> <сумма>]
+  rtp:
+    description: Телепорт в мир RTP
+    usage: /rtp
+  spawn:
+    description: Вернуться на спавн
+    usage: /spawn
 
 permissions:
   pveauction.use:
@@ -20,4 +26,13 @@ permissions:
     default: true
   pveauction.admin:
     description: Админка — креатив, выдача денег
+    default: op
+  pveauction.travel.rtp:
+    description: Команда /rtp
+    default: true
+  pveauction.travel.spawn:
+    description: Команда /spawn
+    default: true
+  pveauction.spawn.bypass:
+    description: Строить и бить на спавне
     default: op

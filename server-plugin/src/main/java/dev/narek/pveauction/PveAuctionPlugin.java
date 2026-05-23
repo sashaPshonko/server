@@ -2,12 +2,15 @@ package dev.narek.pveauction;
 
 import dev.narek.pveauction.command.AhAdminCommand;
 import dev.narek.pveauction.command.AhCommand;
+import dev.narek.pveauction.command.RtpCommand;
+import dev.narek.pveauction.command.SpawnCommand;
 import dev.narek.pveauction.db.LotRepository;
 import dev.narek.pveauction.economy.EconomyService;
 import dev.narek.pveauction.economy.EconomyHookListener;
 import dev.narek.pveauction.gui.GuiListener;
 import dev.narek.pveauction.listener.CommandWhitelistListener;
-import org.bukkit.entity.Player;
+import dev.narek.pveauction.listener.SpawnWorldListener;
+import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Map;
@@ -18,6 +21,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     private LotRepository lotRepository;
     private EconomyService economyService;
+    private WorldTravelService worldTravelService;
     private final Map<UUID, Long> lastRelistAt = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastAuctionPage = new ConcurrentHashMap<>();
 
@@ -32,8 +36,13 @@ public final class PveAuctionPlugin extends JavaPlugin {
         lotRepository = new LotRepository(this);
         lotRepository.init();
 
+        worldTravelService = new WorldTravelService(this);
+        worldTravelService.ensureRtpWorld();
+        worldTravelService.refreshLocations();
+
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
+        getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
 
         var ah = new AhCommand(this);
         var ahCmd = getCommand("ah");
@@ -49,7 +58,17 @@ public final class PveAuctionPlugin extends JavaPlugin {
             adminCmd.setTabCompleter(admin);
         }
 
-        getLogger().info("PveAuction: /ah, /admin, лимит " + maxActiveLots() + " лотов.");
+        var rtpCmd = getCommand("rtp");
+        if (rtpCmd != null) {
+            rtpCmd.setExecutor(new RtpCommand(this));
+        }
+
+        var spawnCmd = getCommand("spawn");
+        if (spawnCmd != null) {
+            spawnCmd.setExecutor(new SpawnCommand(this));
+        }
+
+        getLogger().info("PveAuction: /ah, /admin, /rtp, /spawn; лимит " + maxActiveLots() + " лотов.");
     }
 
     @Override
@@ -57,6 +76,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         if (lotRepository != null) {
             lotRepository.close();
         }
+    }
+
+    public WorldTravelService worlds() {
+        return worldTravelService;
     }
 
     public LotRepository lots() {

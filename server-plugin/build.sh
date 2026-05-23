@@ -41,4 +41,4 @@ fi
 mkdir -p ../plugins
 cp "${JAR}" ../plugins/
 echo "Скопировано: ../plugins/$(basename "${JAR}")"
-echo "Перезапусти сервер и в игре: /ah"
+echo "Перезапусти сервер и в игре: /ah, /rtp, /spawn"

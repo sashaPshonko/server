@@ -1,0 +1,10 @@
+После первого запуска сервера открой plugins/Essentials/config.yml и добавь/измени:
+
+spawn-on-join: none
+
+disabled-commands:
+  - spawn
+  - setspawn
+
+Иначе Essentials перехватит /spawn и спавн при входе.
+Команды /spawn и /rtp делает PveAuction.
