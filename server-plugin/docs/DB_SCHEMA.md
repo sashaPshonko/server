@@ -86,7 +86,7 @@ UPDATE players SET rank_id = 'vip' WHERE uuid = '...';
 uuid: 550e8400-e29b-41d4-a716-446655440000
 rank_id: player  →  [Игрок] (зелёный)
 tokens: 0
-clan_id: NULL     →  «не состоит в клане»
+clan_id: NULL     →  «нет»
 ```
 
 **Игрок в клане:**

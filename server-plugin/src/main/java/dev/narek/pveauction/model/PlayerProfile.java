@@ -14,7 +14,7 @@ public record PlayerProfile(
 ) {
     public String clanDisplay() {
         if (clanName == null || clanName.isBlank()) {
-            return "не состоит в клане";
+            return "нет";
         }
         return clanName;
     }
