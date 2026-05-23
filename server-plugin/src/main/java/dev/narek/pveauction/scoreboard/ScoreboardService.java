@@ -41,20 +41,29 @@ public final class ScoreboardService {
         String title = plugin.getConfig().getString("scoreboard.title", "4NAREK");
         NamedTextColor rankColor = RankColors.parse(profile.rankColor());
 
-        List<Component> lines = new ArrayList<>();
-        lines.add(Component.empty());
-        lines.add(Component.text(player.getName(), NamedTextColor.WHITE));
-        lines.add(Component.text("Ранг: ", NamedTextColor.GRAY)
-                .append(Component.text(profile.rankDisplayName(), rankColor)));
-        lines.add(Component.text("Клан: ", NamedTextColor.GRAY)
-                .append(Component.text(profile.clanDisplay(), NamedTextColor.WHITE)));
-        lines.add(Component.text("Монет: ", NamedTextColor.GRAY)
-                .append(Component.text(GuiItems.formatPrice((long) coins), NamedTextColor.GOLD)));
-        lines.add(Component.text("Токенов: ", NamedTextColor.GRAY)
-                .append(Component.text(GuiItems.formatPrice(profile.tokens()), NamedTextColor.AQUA)));
-        lines.add(Component.empty());
+        String indent = plugin.getConfig().getString("scoreboard.indent", "    ");
 
-        applySidebar(player, title, lines);
+        List<Component> lines = new ArrayList<>();
+        lines.add(pad(indent, Component.empty()));
+        lines.add(pad(indent, Component.text(player.getName(), NamedTextColor.WHITE)));
+        lines.add(pad(indent, Component.text("Ранг: ", NamedTextColor.GRAY)
+                .append(Component.text(profile.rankDisplayName(), rankColor))));
+        lines.add(pad(indent, Component.text("Клан: ", NamedTextColor.GRAY)
+                .append(Component.text(profile.clanDisplay(), NamedTextColor.WHITE))));
+        lines.add(pad(indent, Component.text("Монет: ", NamedTextColor.GRAY)
+                .append(Component.text(GuiItems.formatPrice((long) coins), NamedTextColor.GOLD))));
+        lines.add(pad(indent, Component.text("Токенов: ", NamedTextColor.GRAY)
+                .append(Component.text(GuiItems.formatPrice(profile.tokens()), NamedTextColor.AQUA))));
+        lines.add(pad(indent, Component.empty()));
+
+        applySidebar(player, indent + title, lines);
+    }
+
+    private static Component pad(String indent, Component line) {
+        if (indent == null || indent.isEmpty()) {
+            return line;
+        }
+        return Component.text(indent).append(line);
     }
 
     public void clear(Player player) {

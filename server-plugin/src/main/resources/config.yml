@@ -2,6 +2,7 @@
 scoreboard:
   enabled: true
   title: "4NAREK"
+  indent: "    "
   update-ticks: 40
 
 # Макс. активных лотов на одного игрока

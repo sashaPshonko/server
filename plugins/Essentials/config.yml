@@ -155,7 +155,7 @@ warn-on-smite: true
 drop-items-if-full: false
 
 # Should Essentials notify players if they have no new mail?
-notify-no-new-mail: true
+notify-no-new-mail: false
 
 # Specifies the cooldown duration, in seconds, between mail notifications for a player.
 # Useful for servers with high mail traffic.
@@ -662,7 +662,7 @@ last-message-reply-vanished: false
 milk-bucket-easter-egg: true
 
 # Toggles whether the fly status message should be sent to players on join.
-send-fly-enable-on-join: true
+send-fly-enable-on-join: false
 
 # Set to true to enable per-world permissions for setting the time of individual worlds with Essentials commands.
 # This applies to the /time, /day, and /night commands.
@@ -702,7 +702,7 @@ allow-selling-named-items: false
 # The delay, in milliseconds, for displaying the MOTD to players on join.
 # This has no effect if the MOTD command or permission is disabled.
 # Set to -1 to disable the join MOTD entirely.
-delay-motd: 0
+delay-motd: -1
 
 # A list of commands that should have their complementary confirm commands enabled by default.
 # This is empty by default. For the latest list of valid commands, refer to the latest source 'config.yml'.
@@ -1204,7 +1204,7 @@ newbies:
   # {DISPLAYNAME} will be replaced with the player name.
   # Set to '' to disable.
   #announce-format: ''
-  announce-format: '&dWelcome {DISPLAYNAME}&d to the server!'
+  announce-format: ''
 
   # When players spawn for the first time, which spawnpoint should be used?
   # Set to 'none' to use the spawnpoint of the world.
