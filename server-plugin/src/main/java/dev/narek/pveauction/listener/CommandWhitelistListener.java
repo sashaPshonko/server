@@ -10,7 +10,10 @@ import java.util.Set;
 
 public final class CommandWhitelistListener implements Listener {
 
-    private static final Set<String> ALLOWED = Set.of("ah", "admin", "rtp", "spawn");
+    private static final Set<String> ALLOWED = Set.of(
+            "ah", "admin", "rtp", "spawn",
+            "sethome", "home", "pay", "clan"
+    );
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCommand(PlayerCommandPreprocessEvent event) {

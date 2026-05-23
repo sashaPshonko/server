@@ -1,11 +1,18 @@
 package dev.narek.pveauction;
 
+import dev.narek.pveauction.clan.ClanService;
 import dev.narek.pveauction.command.AhAdminCommand;
 import dev.narek.pveauction.command.AhCommand;
+import dev.narek.pveauction.command.ClanCommand;
+import dev.narek.pveauction.command.HomeCommand;
+import dev.narek.pveauction.command.PayCommand;
 import dev.narek.pveauction.command.RtpCommand;
+import dev.narek.pveauction.command.SetHomeCommand;
 import dev.narek.pveauction.command.SpawnCommand;
+import dev.narek.pveauction.db.ClanRepository;
 import dev.narek.pveauction.db.LotRepository;
 import dev.narek.pveauction.db.PlayerRepository;
+import dev.narek.pveauction.gui.clan.ClanGuiListener;
 import dev.narek.pveauction.listener.ScoreboardListener;
 import dev.narek.pveauction.scoreboard.ScoreboardService;
 import dev.narek.pveauction.economy.EconomyService;
@@ -24,6 +31,8 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     private LotRepository lotRepository;
     private PlayerRepository playerRepository;
+    private ClanRepository clanRepository;
+    private ClanService clanService;
     private EconomyService economyService;
     private WorldTravelService worldTravelService;
     private ScoreboardService scoreboardService;
@@ -45,6 +54,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         playerRepository = new PlayerRepository(this);
         playerRepository.init();
 
+        clanRepository = new ClanRepository(this);
+        clanRepository.init();
+        clanService = new ClanService(this, clanRepository);
+
         scoreboardService = new ScoreboardService(this);
         scoreboardListener = new ScoreboardListener(this, scoreboardService);
 
@@ -55,6 +68,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimer(this, worldTravelService::ensureSpawnNight, 100L, 200L);
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
+        getServer().getPluginManager().registerEvents(new ClanGuiListener(this, clanService), this);
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
         getServer().getPluginManager().registerEvents(scoreboardListener, this);
@@ -86,7 +100,20 @@ public final class PveAuctionPlugin extends JavaPlugin {
             spawnCmd.setExecutor(new SpawnCommand(this));
         }
 
-        getLogger().info("PveAuction: /ah, /admin, /rtp, /spawn; лимит " + maxActiveLots() + " лотов.");
+        registerCmd("sethome", new SetHomeCommand(this, clanService, worldTravelService));
+        registerCmd("home", new HomeCommand(this, clanService));
+        var payCmd = getCommand("pay");
+        if (payCmd != null) {
+            payCmd.setExecutor(new PayCommand(this, clanService));
+            payCmd.setTabCompleter(new PayCommand(this, clanService));
+        }
+        var clanCmd = getCommand("clan");
+        if (clanCmd != null) {
+            clanCmd.setExecutor(new ClanCommand(this, clanService));
+            clanCmd.setTabCompleter(new ClanCommand(this, clanService));
+        }
+
+        getLogger().info("PveAuction: аукцион, кланы, /pay, дом; лимит " + maxActiveLots() + " лотов.");
     }
 
     @Override
@@ -96,6 +123,16 @@ public final class PveAuctionPlugin extends JavaPlugin {
         }
         if (playerRepository != null) {
             playerRepository.close();
+        }
+        if (clanRepository != null) {
+            clanRepository.close();
+        }
+    }
+
+    private void registerCmd(String name, org.bukkit.command.CommandExecutor executor) {
+        var cmd = getCommand(name);
+        if (cmd != null) {
+            cmd.setExecutor(executor);
         }
     }
 
@@ -113,6 +150,14 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     public ScoreboardService scoreboards() {
         return scoreboardService;
+    }
+
+    public ScoreboardListener scoreboardListener() {
+        return scoreboardListener;
+    }
+
+    public ClanService clans() {
+        return clanService;
     }
 
     public EconomyService economy() {

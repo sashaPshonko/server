@@ -2,8 +2,12 @@
 scoreboard:
   enabled: true
   title: "4NAREK"
-  indent: "    "
+  indent: "  "
   update-ticks: 40
+
+# Клан: время жизни приглашения (секунды)
+clan:
+  invite-ttl-seconds: 120
 
 # Макс. активных лотов на одного игрока
 max-active-lots: 5

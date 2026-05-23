@@ -19,6 +19,18 @@ commands:
   spawn:
     description: Вернуться на спавн
     usage: /spawn
+  sethome:
+    description: Установить дом
+    usage: /sethome
+  home:
+    description: Телепорт домой
+    usage: /home
+  pay:
+    description: Перевод денег
+    usage: /pay <ник> <сумма>
+  clan:
+    description: Кланы
+    usage: /clan <подкоманда>
 
 permissions:
   pveauction.use:
@@ -36,3 +48,12 @@ permissions:
   pveauction.spawn.bypass:
     description: Строить и бить на спавне
     default: op
+  pveauction.home:
+    description: /sethome и /home
+    default: true
+  pveauction.pay:
+    description: /pay
+    default: true
+  pveauction.clan:
+    description: Команды клана
+    default: true

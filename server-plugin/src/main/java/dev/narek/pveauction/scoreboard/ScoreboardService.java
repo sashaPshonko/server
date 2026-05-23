@@ -41,7 +41,7 @@ public final class ScoreboardService {
         String title = plugin.getConfig().getString("scoreboard.title", "4NAREK");
         NamedTextColor rankColor = RankColors.parse(profile.rankColor());
 
-        String indent = plugin.getConfig().getString("scoreboard.indent", "    ");
+        String indent = plugin.getConfig().getString("scoreboard.indent", "  ");
 
         List<Component> lines = new ArrayList<>();
         lines.add(pad(indent, Component.empty()));

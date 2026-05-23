@@ -1,0 +1,109 @@
+package dev.narek.pveauction.command;
+
+import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.clan.ClanService;
+import dev.narek.pveauction.util.GuiItems;
+import dev.narek.pveauction.util.Msg;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public final class PayCommand implements CommandExecutor, TabCompleter {
+
+    private final PveAuctionPlugin plugin;
+    private final ClanService clans;
+
+    public PayCommand(PveAuctionPlugin plugin, ClanService clans) {
+        this.plugin = plugin;
+        this.clans = clans;
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Только для игроков.");
+            return true;
+        }
+        if (!plugin.economy().isEnabled()) {
+            Msg.send(player, Msg.err("Экономика не подключена."));
+            return true;
+        }
+        if (args.length < 2) {
+            Msg.send(player, Msg.err("Использование: /pay <ник> <сумма>"));
+            return true;
+        }
+
+        String targetName = args[0];
+        long amount;
+        try {
+            amount = ClanService.parseAmount(args[1]);
+            ClanService.validateAmount(amount);
+        } catch (NumberFormatException e) {
+            Msg.send(player, Msg.err("Неверная сумма."));
+            return true;
+        } catch (IllegalStateException e) {
+            Msg.send(player, Msg.err(e.getMessage()));
+            return true;
+        }
+
+        if (targetName.equalsIgnoreCase(player.getName())) {
+            Msg.send(player, Msg.err("Нельзя перевести себе."));
+            return true;
+        }
+
+        Player target = clans.findOnline(targetName);
+        if (target == null) {
+            Msg.send(player, Msg.err("Игрок должен быть онлайн."));
+            return true;
+        }
+
+        if (!plugin.economy().has(player, amount)) {
+            Msg.send(player, Msg.err("Не хватает денег."));
+            return true;
+        }
+
+        if (!plugin.economy().withdraw(player, amount)) {
+            Msg.send(player, Msg.err("Не удалось списать деньги."));
+            return true;
+        }
+        if (!plugin.economy().deposit(target, amount)) {
+            plugin.economy().deposit(player, amount);
+            Msg.send(player, Msg.err("Не удалось перевести."));
+            return true;
+        }
+
+        Msg.send(player, Msg.ok("Переведено ").append(Msg.money(amount))
+                .append(Msg.ok(" → " + target.getName())));
+        Msg.send(target, Msg.info("Получено ").append(Msg.money(amount))
+                .append(Msg.info(" от " + player.getName())));
+        return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(
+            @NotNull CommandSender sender,
+            @NotNull Command command,
+            @NotNull String alias,
+            @NotNull String[] args
+    ) {
+        if (args.length == 1) {
+            String prefix = args[0].toLowerCase(Locale.ROOT);
+            List<String> out = new ArrayList<>();
+            for (Player p : plugin.getServer().getOnlinePlayers()) {
+                if (p.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                    out.add(p.getName());
+                }
+            }
+            return out;
+        }
+        return List.of();
+    }
+}
