@@ -1,7 +1,7 @@
 # Скорборд справа
 scoreboard:
   enabled: true
-  title: "4нарек"
+  title: "4NAREK"
   update-ticks: 40
 
 # Макс. активных лотов на одного игрока
