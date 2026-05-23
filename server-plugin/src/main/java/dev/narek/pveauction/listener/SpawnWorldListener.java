@@ -3,14 +3,13 @@ package dev.narek.pveauction.listener;
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.world.RtpTeleportHelper;
 import dev.narek.pveauction.world.WorldTravelService;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -25,7 +24,7 @@ public final class SpawnWorldListener implements Listener {
 
     private final PveAuctionPlugin plugin;
     private final WorldTravelService worlds;
-    private final Set<UUID> portalCooldown = new HashSet<>();
+    private final Set<UUID> rtpCooldown = new HashSet<>();
 
     public SpawnWorldListener(PveAuctionPlugin plugin) {
         this.plugin = plugin;
@@ -79,24 +78,24 @@ public final class SpawnWorldListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!worlds.isInSpawnPortal(event.getTo())) {
+        if (!worlds.shouldAutoRtpOnSpawn(event.getTo())) {
             return;
         }
-        if (portalCooldown.contains(player.getUniqueId())) {
+        if (rtpCooldown.contains(player.getUniqueId())) {
             return;
         }
-        portalCooldown.add(player.getUniqueId());
-        RtpTeleportHelper.teleportRandom(plugin, worlds, player, "Портал отправил в мир.");
+        rtpCooldown.add(player.getUniqueId());
+        RtpTeleportHelper.teleportRandom(plugin, worlds, player);
         plugin.getServer().getScheduler().runTaskLater(
                 plugin,
-                () -> portalCooldown.remove(player.getUniqueId()),
-                plugin.getConfig().getLong("spawn-portal-cooldown-ticks", 60L)
+                () -> rtpCooldown.remove(player.getUniqueId()),
+                plugin.getConfig().getLong("spawn-rtp-cooldown-ticks", 40L)
         );
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onQuit(PlayerQuitEvent event) {
-        portalCooldown.remove(event.getPlayer().getUniqueId());
+        rtpCooldown.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -104,7 +103,7 @@ public final class SpawnWorldListener implements Listener {
         if (!worlds.isSpawnWorld(event.getBlock().getWorld())) {
             return;
         }
-        if (canBuild(event.getPlayer())) {
+        if (canBypass(event.getPlayer())) {
             return;
         }
         event.setCancelled(true);
@@ -115,38 +114,27 @@ public final class SpawnWorldListener implements Listener {
         if (!worlds.isSpawnWorld(event.getBlock().getWorld())) {
             return;
         }
-        if (canBuild(event.getPlayer())) {
+        if (canBypass(event.getPlayer())) {
             return;
         }
         event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) {
+    public void onDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
             return;
         }
-        if (!worlds.isSpawnWorld(victim.getWorld())) {
+        if (!worlds.isSpawnWorld(player.getWorld())) {
             return;
         }
-        Entity damager = event.getDamager();
-        Player attacker = null;
-        if (damager instanceof Player p) {
-            attacker = p;
-        } else if (damager instanceof org.bukkit.entity.Projectile projectile
-                && projectile.getShooter() instanceof Player p) {
-            attacker = p;
-        }
-        if (attacker == null) {
-            return;
-        }
-        if (canBuild(attacker)) {
+        if (canBypass(player)) {
             return;
         }
         event.setCancelled(true);
     }
 
-    private boolean canBuild(Player player) {
+    private boolean canBypass(Player player) {
         return player.hasPermission("pveauction.spawn.bypass");
     }
 }

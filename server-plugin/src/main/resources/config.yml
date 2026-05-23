@@ -25,15 +25,11 @@ spawn-location:
   yaw: 0
   pitch: 0
 
-# Яма/портал на карте спавна → случайный RTP (как /rtp)
-spawn-portal:
-  x: 8
-  y: -62
-  z: -19
-  radius: 2.5
-# Игрок в зоне портала и не выше этой высоты (упал в яму)
-spawn-portal-max-y: -60
-spawn-portal-cooldown-ticks: 60
+# На спавне: Y ниже этого значения → автоматический RTP (как /rtp)
+spawn-rtp-trigger-y: -3
+spawn-rtp-cooldown-ticks: 40
+
+rtp-success-message: "Телепорт в случайное место мира."
 
 # /rtp только с карты спавна
 rtp-only-from-spawn-world: true

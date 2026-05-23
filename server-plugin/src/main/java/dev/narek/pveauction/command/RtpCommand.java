@@ -41,7 +41,7 @@ public final class RtpCommand implements CommandExecutor {
             return true;
         }
 
-        RtpTeleportHelper.teleportRandom(plugin, worlds, player, "Телепорт в случайное место мира.");
+        RtpTeleportHelper.teleportRandom(plugin, worlds, player);
         return true;
     }
 }
