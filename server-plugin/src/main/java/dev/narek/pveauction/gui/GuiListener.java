@@ -69,7 +69,6 @@ public final class GuiListener implements Listener {
         }
         if (raw == AuctionMenu.SLOT_RELOAD) {
             menu.reload();
-            Msg.send(player, Msg.ok("Список обновлён."));
             return;
         }
         if (raw == AuctionMenu.SLOT_STORAGE) {
