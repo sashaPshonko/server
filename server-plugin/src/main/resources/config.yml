@@ -4,6 +4,9 @@ max-active-lots: 5
 # Перевыставить в хранилище (секунды)
 relist-cooldown-seconds: 60
 
+# Срок лота на аукционе (часы), сбрасывается при перевыставлении
+auction-expiry-hours: 12
+
 # --- Миры: спавн (карта) и RTP (обычный выживание 1000×1000) ---
 spawn-world: world
 rtp-world: rtp
@@ -36,5 +39,5 @@ loading-title: "Загрузка"
 loading-subtitle: "Переход в другой мир…"
 loading-min-ms: 600
 
-# /rtp только с карты спавна
-rtp-only-from-spawn-world: true
+# /rtp в мире RTP — случайная точка в том же мире
+rtp-only-from-spawn-world: false

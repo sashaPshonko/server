@@ -35,11 +35,6 @@ public final class RtpCommand implements CommandExecutor {
             TravelMsg.send(player, TravelMsg.err("Нет доступа."));
             return true;
         }
-        if (plugin.getConfig().getBoolean("rtp-only-from-spawn-world", true)
-                && !worlds.isSpawnWorld(player.getWorld())) {
-            TravelMsg.send(player, TravelMsg.err("Команда /rtp работает только на спавне."));
-            return true;
-        }
 
         RtpTeleportHelper.teleportRandom(plugin, worlds, player);
         return true;

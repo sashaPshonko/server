@@ -94,6 +94,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         return getConfig().getInt("max-active-lots", 5);
     }
 
+    public long auctionExpiryMs() {
+        return getConfig().getLong("auction-expiry-hours", 12) * 3_600_000L;
+    }
+
     public long relistCooldownMs() {
         return getConfig().getLong("relist-cooldown-seconds", 60) * 1000L;
     }

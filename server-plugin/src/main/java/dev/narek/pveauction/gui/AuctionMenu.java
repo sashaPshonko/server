@@ -59,13 +59,14 @@ public final class AuctionMenu implements InventoryHolder {
         inventory.clear();
         slotToLotId.clear();
         UUID viewerId = viewer.getUniqueId();
+        long expiryMs = plugin.auctionExpiryMs();
 
         int offset = page * LOT_SLOTS;
         List<AuctionLot> lots;
         int totalLots;
         try {
-            lots = plugin.lots().listActive(LOT_SLOTS, offset);
-            totalLots = plugin.lots().countActiveLots();
+            lots = plugin.lots().listListed(LOT_SLOTS, offset);
+            totalLots = plugin.lots().countListedLots();
         } catch (SQLException e) {
             plugin.getLogger().severe("Не загрузить лоты: " + e.getMessage());
             lots = List.of();
@@ -81,7 +82,7 @@ public final class AuctionMenu implements InventoryHolder {
             }
             ItemMeta meta = display.getItemMeta();
             if (meta != null) {
-                meta.lore(GuiItems.lotLore(lot.price(), lot.sellerName(), own, !own));
+                meta.lore(GuiItems.lotLore(lot.price(), lot.sellerName(), own, !own, lot.createdAt(), expiryMs));
                 display.setItemMeta(meta);
             }
             inventory.setItem(i, display);
@@ -97,16 +98,16 @@ public final class AuctionMenu implements InventoryHolder {
             inventory.setItem(slot, glass);
         }
 
-        int active;
+        int unsold;
         try {
-            active = plugin.lots().countActiveBySeller(viewer.getUniqueId());
+            unsold = plugin.lots().countUnsoldBySeller(viewer.getUniqueId());
         } catch (SQLException e) {
-            active = 0;
+            unsold = 0;
         }
         int max = plugin.maxActiveLots();
         inventory.setItem(SLOT_STORAGE, GuiItems.button(Material.CHEST,
                 Component.text("ХРАНИЛИЩЕ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD),
-                Component.text("Твои лоты: " + active + "/" + max, NamedTextColor.AQUA)));
+                Component.text("Твои лоты: " + unsold + "/" + max, NamedTextColor.AQUA)));
 
         boolean hasPrev = page > 0;
         boolean hasNext = (page + 1) * LOT_SLOTS < totalLots;

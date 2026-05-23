@@ -85,18 +85,22 @@ public final class LotRepository {
         throw new SQLException("Нет id нового лота");
     }
 
-    public int countActiveLots() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM lots WHERE sold = 0";
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                return rs.getInt(1);
+    /** Лоты на витрине аукциона (не проданы, не истекли). */
+    public int countListedLots() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM lots WHERE sold = 0 AND created_at >= ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, minCreatedAtListed());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
             }
         }
         return 0;
     }
 
-    public int countActiveBySeller(UUID sellerUuid) throws SQLException {
+    /** Все неснятые лоты продавца (включая истёкшие) — лимит слотов. */
+    public int countUnsoldBySeller(UUID sellerUuid) throws SQLException {
         String sql = "SELECT COUNT(*) FROM lots WHERE sold = 0 AND seller_uuid = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, sellerUuid.toString());
@@ -109,17 +113,18 @@ public final class LotRepository {
         return 0;
     }
 
-    public List<AuctionLot> listActive(int limit, int offset) throws SQLException {
+    public List<AuctionLot> listListed(int limit, int offset) throws SQLException {
         String sql = """
             SELECT id, seller_uuid, seller_name, item_blob, price, created_at
-            FROM lots WHERE sold = 0
+            FROM lots WHERE sold = 0 AND created_at >= ?
             ORDER BY created_at DESC
             LIMIT ? OFFSET ?
             """;
         List<AuctionLot> out = new ArrayList<>();
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            ps.setLong(1, minCreatedAtListed());
+            ps.setInt(2, limit);
+            ps.setInt(3, offset);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     out.add(mapRow(rs));
@@ -129,7 +134,8 @@ public final class LotRepository {
         return out;
     }
 
-    public List<AuctionLot> listActiveBySeller(UUID sellerUuid, int limit) throws SQLException {
+    /** Хранилище: все неснятые лоты, в т.ч. истёкшие. */
+    public List<AuctionLot> listUnsoldBySeller(UUID sellerUuid, int limit) throws SQLException {
         String sql = """
             SELECT id, seller_uuid, seller_name, item_blob, price, created_at
             FROM lots WHERE sold = 0 AND seller_uuid = ?
@@ -149,13 +155,14 @@ public final class LotRepository {
         return out;
     }
 
-    public Optional<AuctionLot> findActive(long id) throws SQLException {
+    public Optional<AuctionLot> findListed(long id) throws SQLException {
         String sql = """
             SELECT id, seller_uuid, seller_name, item_blob, price, created_at
-            FROM lots WHERE id = ? AND sold = 0
+            FROM lots WHERE id = ? AND sold = 0 AND created_at >= ?
             """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, id);
+            ps.setLong(2, minCreatedAtListed());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapRow(rs));
@@ -165,10 +172,26 @@ public final class LotRepository {
         return Optional.empty();
     }
 
-    /** Снять свой лот с аукциона — удалить запись, вернуть данные лота. */
+    public Optional<AuctionLot> findUnsold(long id, UUID sellerUuid) throws SQLException {
+        String sql = """
+            SELECT id, seller_uuid, seller_name, item_blob, price, created_at
+            FROM lots WHERE id = ? AND sold = 0 AND seller_uuid = ?
+            """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.setString(2, sellerUuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRow(rs));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     public Optional<AuctionLot> cancelActiveLot(long lotId, UUID sellerUuid) throws SQLException {
-        Optional<AuctionLot> lot = findActive(lotId);
-        if (lot.isEmpty() || !lot.get().sellerUuid().equals(sellerUuid)) {
+        Optional<AuctionLot> lot = findUnsold(lotId, sellerUuid);
+        if (lot.isEmpty()) {
             return Optional.empty();
         }
         String sql = "DELETE FROM lots WHERE id = ? AND seller_uuid = ? AND sold = 0";
@@ -182,7 +205,7 @@ public final class LotRepository {
         return lot;
     }
 
-    /** Перевыставить — обновить created_at у всех активных лотов продавца. */
+    /** Перевыставить — сброс таймера (created_at) у всех неснятых лотов. */
     public int relistSellerLots(UUID sellerUuid) throws SQLException {
         String sql = "UPDATE lots SET created_at = ? WHERE seller_uuid = ? AND sold = 0";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -195,10 +218,11 @@ public final class LotRepository {
     public boolean tryMarkSold(long lotId, UUID buyerUuid) throws SQLException {
         connection.setAutoCommit(false);
         try {
-            String sql = "UPDATE lots SET sold = 1, buyer_uuid = ? WHERE id = ? AND sold = 0";
+            String sql = "UPDATE lots SET sold = 1, buyer_uuid = ? WHERE id = ? AND sold = 0 AND created_at >= ?";
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.setString(1, buyerUuid.toString());
                 ps.setLong(2, lotId);
+                ps.setLong(3, minCreatedAtListed());
                 int n = ps.executeUpdate();
                 if (n == 0) {
                     connection.rollback();
@@ -217,6 +241,10 @@ public final class LotRepository {
 
     public ItemStack bytesToItem(byte[] blob) {
         return ItemStack.deserializeBytes(blob);
+    }
+
+    private long minCreatedAtListed() {
+        return System.currentTimeMillis() - plugin.auctionExpiryMs();
     }
 
     private static byte[] itemStackToBytes(ItemStack item) {

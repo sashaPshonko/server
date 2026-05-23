@@ -84,7 +84,7 @@ public final class GuiListener implements Listener {
 
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-                Optional<AuctionLot> lotOpt = plugin.lots().findActive(lotId);
+                Optional<AuctionLot> lotOpt = plugin.lots().findListed(lotId);
                 if (lotOpt.isEmpty()) {
                     runSync(player, () -> {
                         Msg.send(player, Msg.err("Лот уже недоступен."));
@@ -216,7 +216,7 @@ public final class GuiListener implements Listener {
     private void tryBuy(Player buyer, long lotId) {
         Optional<AuctionLot> opt;
         try {
-            opt = plugin.lots().findActive(lotId);
+            opt = plugin.lots().findListed(lotId);
         } catch (SQLException e) {
             Msg.send(buyer, Msg.err("Ошибка базы данных."));
             return;

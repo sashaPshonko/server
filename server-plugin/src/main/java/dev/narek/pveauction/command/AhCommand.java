@@ -64,7 +64,7 @@ public final class AhCommand implements CommandExecutor, TabCompleter {
 
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                 try {
-                    int active = plugin.lots().countActiveBySeller(player.getUniqueId());
+                    int active = plugin.lots().countUnsoldBySeller(player.getUniqueId());
                     if (active >= max) {
                         runSync(player, () -> {
                             player.getInventory().addItem(toStore);

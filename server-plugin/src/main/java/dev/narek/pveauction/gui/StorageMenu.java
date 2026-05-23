@@ -4,6 +4,7 @@ import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.model.AuctionLot;
 import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.GuiText;
+import dev.narek.pveauction.util.LotExpiry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -24,7 +25,6 @@ public final class StorageMenu implements InventoryHolder {
 
     public static final int SIZE = 54;
     public static final int LOT_SLOTS = 45;
-    /** Тот же слот, что вход в хранилище на аукционе */
     public static final int SLOT_BACK = 46;
     public static final int SLOT_RELIST = 49;
 
@@ -48,10 +48,11 @@ public final class StorageMenu implements InventoryHolder {
     private void fill() {
         inventory.clear();
         slotToLotId.clear();
+        long expiryMs = plugin.auctionExpiryMs();
 
         List<AuctionLot> lots;
         try {
-            lots = plugin.lots().listActiveBySeller(viewer.getUniqueId(), plugin.maxActiveLots());
+            lots = plugin.lots().listUnsoldBySeller(viewer.getUniqueId(), plugin.maxActiveLots());
         } catch (SQLException e) {
             plugin.getLogger().severe("Не загрузить хранилище: " + e.getMessage());
             lots = List.of();
@@ -65,7 +66,7 @@ public final class StorageMenu implements InventoryHolder {
             }
             ItemMeta meta = display.getItemMeta();
             if (meta != null) {
-                meta.lore(GuiItems.lotLore(lot.price(), lot.sellerName(), true, false));
+                meta.lore(GuiItems.lotLore(lot.price(), lot.sellerName(), true, false, lot.createdAt(), expiryMs));
                 display.setItemMeta(meta);
             }
             inventory.setItem(i, display);
@@ -86,16 +87,22 @@ public final class StorageMenu implements InventoryHolder {
         inventory.setItem(SLOT_BACK, GuiItems.button(Material.ARROW,
                 Component.text("НА АУКЦИОН", NamedTextColor.GREEN, TextDecoration.BOLD)));
 
+        boolean hasExpired = lots.stream().anyMatch(lot -> LotExpiry.isExpired(lot, expiryMs));
+
         Component relistName = Component.text("ПЕРЕВЫСТАВИТЬ", NamedTextColor.AQUA, TextDecoration.BOLD);
         Component relistStatus;
         if (left > 0) {
             relistStatus = Component.text("Через " + (left / 1000) + " сек.", NamedTextColor.RED);
+        } else if (hasExpired) {
+            relistStatus = Component.text("Сбросить таймер истёкших!", NamedTextColor.GOLD, TextDecoration.BOLD);
         } else {
             relistStatus = Component.text("Доступно перевыставление!", NamedTextColor.GREEN, TextDecoration.BOLD);
         }
 
         inventory.setItem(SLOT_RELIST, GuiItems.button(Material.CLOCK, relistName, relistStatus,
-                Component.text("Раз в " + cooldownSec + " сек.", NamedTextColor.GRAY)));
+                Component.text("Раз в " + cooldownSec + " сек.", NamedTextColor.GRAY),
+                Component.text("Срок лота: " + (plugin.getConfig().getLong("auction-expiry-hours", 12)) + " ч.",
+                        NamedTextColor.GRAY)));
     }
 
     public void reload() {
