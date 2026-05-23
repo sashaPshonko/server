@@ -4,6 +4,7 @@ cache/
 libraries/
 versions/
 logs/
+world/
 world_nether/
 world_the_end/
 *.log
@@ -16,3 +17,6 @@ plugins/PveAuction/
 plugins/Essentials/userdata/
 plugins/Essentials/uuids.bin
 hs_err_pid*.log
+config/paper-global.yml
+config/paper-world-defaults.yml
+plugins/Essentials/config.yml
