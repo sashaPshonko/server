@@ -16,7 +16,7 @@ timestamps:
   mute: 0
   jail: 0
   onlinejail: 0
-  logout: 1779542587932
+  logout: 1779543574646
   login: 1779542625019
 money: '60000.0'
 last-account-name: amnebycher0mu
@@ -31,8 +31,8 @@ lastlocation:
 logoutlocation:
   world: 78fc9872-cc24-4513-a11a-9cdc9d0759dd
   world-name: world
-  x: -12.223734662393312
-  y: 97.0
-  z: 73.52310835571149
-  yaw: -165.24024963378906
-  pitch: 33.820838928222656
+  x: 27.153562017122827
+  y: 44.200000047683716
+  z: -23.80405695238014
+  yaw: 127.0569076538086
+  pitch: -45.0

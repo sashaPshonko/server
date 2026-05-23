@@ -20,6 +20,10 @@ fi
 
 chmod +x start.sh install-economy.sh address.sh
 [[ -f install-economy.sh ]] && ./install-economy.sh
+if [[ -f server-plugin/gradlew ]]; then
+  chmod +x server-plugin/gradlew server-plugin/build.sh
+  echo "    Плагин: cd server-plugin && ./build.sh"
+fi
 
 echo ""
 echo "==> Файрвол (ufw)"

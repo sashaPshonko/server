@@ -19,10 +19,17 @@
 
 ## Сборка
 
-Нужны Java 21 и Gradle (или wrapper):
+Нужна только **Java 21** (Gradle встроен — `gradlew`):
 
 ```bash
 cd server/server-plugin
+./build.sh
+```
+
+На VPS (Ubuntu):
+```bash
+sudo apt update && sudo apt install -y openjdk-21-jdk
+chmod +x build.sh gradlew
 ./build.sh
 ```
 
