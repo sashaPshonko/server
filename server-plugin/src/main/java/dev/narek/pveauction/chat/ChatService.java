@@ -22,7 +22,7 @@ public final class ChatService {
     }
 
     public Component formatLine(PlayerProfile profile, String playerName, boolean global, String message) {
-        NamedTextColor textColor = global ? NamedTextColor.GRAY : NamedTextColor.DARK_GREEN;
+        NamedTextColor textColor = global ? NamedTextColor.GRAY : RankColors.parse(profile.rankColor());
         return rankTag(profile)
                 .append(Component.text(playerName, NamedTextColor.WHITE, TextDecoration.BOLD))
                 .append(Component.text(": ", NamedTextColor.DARK_GRAY))
