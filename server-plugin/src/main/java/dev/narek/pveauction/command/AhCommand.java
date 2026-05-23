@@ -2,6 +2,7 @@ package dev.narek.pveauction.command;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.gui.AuctionMenu;
+import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.Msg;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
@@ -40,15 +41,20 @@ public final class AhCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args[0].equalsIgnoreCase("sell") && args.length >= 2) {
+            long maxPrice = plugin.maxAuctionPrice();
             long price;
             try {
                 price = Long.parseLong(args[1].replace(" ", "").replace("_", ""));
             } catch (NumberFormatException e) {
-                Msg.send(player, Msg.err("Укажи цену: /ah sell <число>"));
+                Msg.send(player, Msg.err("Максимальная цена — " + GuiItems.formatPrice(maxPrice) + " $"));
                 return true;
             }
             if (price < 1) {
                 Msg.send(player, Msg.err("Цена должна быть больше нуля."));
+                return true;
+            }
+            if (price > maxPrice) {
+                Msg.send(player, Msg.err("Максимальная цена — " + GuiItems.formatPrice(maxPrice) + " $"));
                 return true;
             }
 

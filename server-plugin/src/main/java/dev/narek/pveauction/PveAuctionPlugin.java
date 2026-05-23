@@ -38,7 +38,9 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
         worldTravelService = new WorldTravelService(this);
         worldTravelService.ensureRtpWorld();
+        worldTravelService.ensureSpawnNight();
         worldTravelService.refreshLocations();
+        getServer().getScheduler().runTaskTimer(this, worldTravelService::ensureSpawnNight, 100L, 200L);
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
@@ -96,6 +98,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     public long auctionExpiryMs() {
         return getConfig().getLong("auction-expiry-hours", 12) * 3_600_000L;
+    }
+
+    public long maxAuctionPrice() {
+        return getConfig().getLong("auction-max-price", 100_000_000L);
     }
 
     public long relistCooldownMs() {

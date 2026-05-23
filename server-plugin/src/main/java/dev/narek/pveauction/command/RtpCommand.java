@@ -35,6 +35,10 @@ public final class RtpCommand implements CommandExecutor {
             TravelMsg.send(player, TravelMsg.err("Нет доступа."));
             return true;
         }
+        if (worlds.isSpawnWorld(player.getWorld())) {
+            TravelMsg.send(player, TravelMsg.err("Для этого есть яма)"));
+            return true;
+        }
 
         RtpTeleportHelper.teleportRandom(plugin, worlds, player);
         return true;
