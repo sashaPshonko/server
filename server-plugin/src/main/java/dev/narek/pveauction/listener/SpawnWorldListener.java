@@ -1,9 +1,8 @@
 package dev.narek.pveauction.listener;
 
 import dev.narek.pveauction.PveAuctionPlugin;
-import dev.narek.pveauction.util.TravelMsg;
+import dev.narek.pveauction.world.RtpTeleportHelper;
 import dev.narek.pveauction.world.WorldTravelService;
-import org.bukkit.GameMode;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -74,27 +73,25 @@ public final class SpawnWorldListener implements Listener {
         }.runTask(plugin);
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
         if (!event.hasChangedPosition()) {
             return;
         }
         Player player = event.getPlayer();
-        if (!worlds.isNearRtpPortal(event.getTo())) {
+        if (!worlds.isInSpawnPortal(event.getTo())) {
             return;
         }
         if (portalCooldown.contains(player.getUniqueId())) {
             return;
         }
         portalCooldown.add(player.getUniqueId());
-        player.teleportAsync(worlds.spawnLocation()).thenAccept(ok -> {
-            portalCooldown.remove(player.getUniqueId());
-            if (!ok) {
-                return;
-            }
-            worlds.applySpawnRules(player);
-            TravelMsg.send(player, TravelMsg.ok("Портал вернул на спавн."));
-        });
+        RtpTeleportHelper.teleportRandom(plugin, worlds, player, "Портал отправил в мир.");
+        plugin.getServer().getScheduler().runTaskLater(
+                plugin,
+                () -> portalCooldown.remove(player.getUniqueId()),
+                plugin.getConfig().getLong("spawn-portal-cooldown-ticks", 60L)
+        );
     }
 
     @EventHandler(ignoreCancelled = true)

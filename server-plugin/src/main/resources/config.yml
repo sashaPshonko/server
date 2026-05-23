@@ -9,6 +9,10 @@ spawn-world: world
 rtp-world: rtp
 rtp-world-size: 1000
 
+# Случайный RTP: отступ от границы мира и попыток найти землю
+rtp-border-margin: 40
+rtp-max-attempts: 40
+
 # При входе — на спавн
 teleport-to-spawn-on-join: true
 
@@ -21,16 +25,15 @@ spawn-location:
   yaw: 0
   pitch: 0
 
-# RTP: /rtp и портал обратно (шаг в зону 8 -62 -19)
-rtp-location:
-  world: rtp
-  x: 8.5
+# Яма/портал на карте спавна → случайный RTP (как /rtp)
+spawn-portal:
+  x: 8
   y: -62
-  z: -19.5
-  yaw: 0
-  pitch: 0
-
-rtp-portal-radius: 2.0
+  z: -19
+  radius: 2.5
+# Игрок в зоне портала и не выше этой высоты (упал в яму)
+spawn-portal-max-y: -60
+spawn-portal-cooldown-ticks: 60
 
 # /rtp только с карты спавна
 rtp-only-from-spawn-world: true

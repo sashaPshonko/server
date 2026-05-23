@@ -2,8 +2,8 @@ package dev.narek.pveauction.command;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.util.TravelMsg;
+import dev.narek.pveauction.world.RtpTeleportHelper;
 import dev.narek.pveauction.world.WorldTravelService;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -41,20 +41,7 @@ public final class RtpCommand implements CommandExecutor {
             return true;
         }
 
-        Location target = worlds.rtpLocation();
-        if (target.getWorld() == null) {
-            TravelMsg.send(player, TravelMsg.err("Мир RTP ещё не загружен."));
-            return true;
-        }
-
-        player.teleportAsync(target).thenAccept(ok -> {
-            if (!ok) {
-                TravelMsg.send(player, TravelMsg.err("Не удалось телепортироваться."));
-                return;
-            }
-            worlds.applyRtpRules(player);
-            TravelMsg.send(player, TravelMsg.ok("Ты в мире RTP."));
-        });
+        RtpTeleportHelper.teleportRandom(plugin, worlds, player, "Телепорт в случайное место мира.");
         return true;
     }
 }
