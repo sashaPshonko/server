@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 echo "==> Java 21 (Ubuntu/Debian)"
 if command -v apt-get >/dev/null 2>&1; then
   sudo apt-get update -qq
-  sudo apt-get install -y openjdk-21-jre-headless curl
+  sudo apt-get install -y openjdk-21-jdk curl python3
 else
   echo "Установи Java 21 вручную"
 fi

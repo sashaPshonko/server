@@ -12,40 +12,44 @@ if [[ ! -f eula.txt ]] || ! grep -q '^eula=true' eula.txt; then
   exit 1
 fi
 
-# macOS: /usr/bin/java — заглушка; Paper нужен Java 17+ (для 1.21 лучше 21)
+# Paper 1.21.4 — Java 21 (минимум 17)
 find_java() {
-  if [[ -n "${JAVA_HOME:-}" && -x "${JAVA_HOME}/bin/java" ]]; then
-    echo "${JAVA_HOME}/bin/java"
-    return 0
-  fi
-  local candidates=(
-    /opt/homebrew/opt/openjdk@21/bin/java
-    /opt/homebrew/opt/openjdk@17/bin/java
-    /usr/local/opt/openjdk@21/bin/java
-    /usr/local/opt/openjdk@17/bin/java
-  )
   local c
+  local candidates=()
+  if [[ -n "${JAVA_HOME:-}" ]]; then
+    candidates+=("${JAVA_HOME}/bin/java")
+  fi
+  if command -v java >/dev/null 2>&1; then
+    candidates+=("$(command -v java)")
+  fi
+  # Linux (Ubuntu/Debian VPS)
+  for c in /usr/lib/jvm/java-21-openjdk-amd64/bin/java \
+           /usr/lib/jvm/java-21-openjdk-arm64/bin/java \
+           /usr/lib/jvm/java-17-openjdk-amd64/bin/java; do
+    candidates+=("${c}")
+  done
+  # macOS Homebrew
+  for c in /opt/homebrew/opt/openjdk@21/bin/java \
+           /opt/homebrew/opt/openjdk@17/bin/java \
+           /usr/local/opt/openjdk@21/bin/java; do
+    candidates+=("${c}")
+  done
+  if [[ "$(uname -s)" == "Darwin" ]] && /usr/libexec/java_home -v 21 &>/dev/null; then
+    candidates+=("$(/usr/libexec/java_home -v 21)/bin/java")
+  fi
   for c in "${candidates[@]}"; do
-    if [[ -x "${c}" ]]; then
+    if [[ -x "${c}" ]] && "${c}" -version 2>&1 | grep -qE 'version "(21|1[7-9]|[2-9][0-9])'; then
       echo "${c}"
       return 0
     fi
   done
-  if /usr/libexec/java_home -v 21 &>/dev/null; then
-    echo "$(/usr/libexec/java_home -v 21)/bin/java"
-    return 0
-  fi
-  if /usr/libexec/java_home -v 17 &>/dev/null; then
-    echo "$(/usr/libexec/java_home -v 17)/bin/java"
-    return 0
-  fi
   return 1
 }
 
 JAVA_BIN=$(find_java) || {
-  echo "Нужна Java 17+ (для Paper 1.21.4 — Java 21)."
-  echo "  brew install openjdk@21"
-  echo "  export PATH=\"/opt/homebrew/opt/openjdk@21/bin:\$PATH\""
+  echo "Нужна Java 21 (минимум 17) для Paper 1.21.4."
+  echo "  VPS:  apt install -y openjdk-21-jdk"
+  echo "  Mac:  brew install openjdk@21"
   exit 1
 }
 
