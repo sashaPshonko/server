@@ -5,6 +5,9 @@ import dev.narek.pveauction.command.AhCommand;
 import dev.narek.pveauction.command.RtpCommand;
 import dev.narek.pveauction.command.SpawnCommand;
 import dev.narek.pveauction.db.LotRepository;
+import dev.narek.pveauction.db.PlayerRepository;
+import dev.narek.pveauction.listener.ScoreboardListener;
+import dev.narek.pveauction.scoreboard.ScoreboardService;
 import dev.narek.pveauction.economy.EconomyService;
 import dev.narek.pveauction.economy.EconomyHookListener;
 import dev.narek.pveauction.gui.GuiListener;
@@ -20,8 +23,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class PveAuctionPlugin extends JavaPlugin {
 
     private LotRepository lotRepository;
+    private PlayerRepository playerRepository;
     private EconomyService economyService;
     private WorldTravelService worldTravelService;
+    private ScoreboardService scoreboardService;
+    private ScoreboardListener scoreboardListener;
     private final Map<UUID, Long> lastRelistAt = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastAuctionPage = new ConcurrentHashMap<>();
 
@@ -36,6 +42,12 @@ public final class PveAuctionPlugin extends JavaPlugin {
         lotRepository = new LotRepository(this);
         lotRepository.init();
 
+        playerRepository = new PlayerRepository(this);
+        playerRepository.init();
+
+        scoreboardService = new ScoreboardService(this);
+        scoreboardListener = new ScoreboardListener(this, scoreboardService);
+
         worldTravelService = new WorldTravelService(this);
         worldTravelService.ensureRtpWorld();
         worldTravelService.ensureSpawnNight();
@@ -45,6 +57,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
+        getServer().getPluginManager().registerEvents(scoreboardListener, this);
+
+        long sbTicks = getConfig().getLong("scoreboard.update-ticks", 40L);
+        getServer().getScheduler().runTaskTimer(this, scoreboardListener::refreshAll, sbTicks, sbTicks);
 
         var ah = new AhCommand(this);
         var ahCmd = getCommand("ah");
@@ -78,6 +94,9 @@ public final class PveAuctionPlugin extends JavaPlugin {
         if (lotRepository != null) {
             lotRepository.close();
         }
+        if (playerRepository != null) {
+            playerRepository.close();
+        }
     }
 
     public WorldTravelService worlds() {
@@ -86,6 +105,14 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
     public LotRepository lots() {
         return lotRepository;
+    }
+
+    public PlayerRepository players() {
+        return playerRepository;
+    }
+
+    public ScoreboardService scoreboards() {
+        return scoreboardService;
     }
 
     public EconomyService economy() {
