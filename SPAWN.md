@@ -73,3 +73,5 @@ scp -r ./папка_карты/* root@37.233.82.215:/root/server/world/
 Перед этим на VPS: `rm -rf world` или `mv world world_backup`.
 
 Карта для **Java 1.21.x** (1.20+ обычно тоже ок).
+
+`world/` в git — после заливки карты: `git add world && git push`, на VPS `git pull`.
