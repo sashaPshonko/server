@@ -7,6 +7,7 @@ public record PlayerProfile(
         String lastName,
         String rankId,
         String rankDisplayName,
+        String rankColor,
         long tokens,
         Integer clanId,
         String clanName

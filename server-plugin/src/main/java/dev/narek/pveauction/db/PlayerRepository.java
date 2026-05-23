@@ -34,9 +34,11 @@ public final class PlayerRepository {
                     CREATE TABLE IF NOT EXISTS ranks (
                         id TEXT PRIMARY KEY,
                         display_name TEXT NOT NULL,
+                        color TEXT NOT NULL DEFAULT 'GREEN',
                         sort_order INTEGER NOT NULL DEFAULT 0
                     )
                     """);
+                migrateRankColorColumn(st);
                 st.execute("""
                     CREATE TABLE IF NOT EXISTS clans (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,9 +62,10 @@ public final class PlayerRepository {
                     )
                     """);
                 st.execute("""
-                    INSERT OR IGNORE INTO ranks (id, display_name, sort_order)
-                    VALUES ('player', 'Игрок', 0)
+                    INSERT OR IGNORE INTO ranks (id, display_name, color, sort_order)
+                    VALUES ('player', 'Игрок', 'GREEN', 0)
                     """);
+                st.execute("UPDATE ranks SET color = 'GREEN' WHERE id = 'player' AND (color IS NULL OR color = '')");
             }
             connection.setAutoCommit(true);
         } catch (SQLException e) {
@@ -102,7 +105,7 @@ public final class PlayerRepository {
 
     public Optional<PlayerProfile> find(UUID uuid) throws SQLException {
         String sql = """
-            SELECT p.uuid, p.last_name, p.rank_id, r.display_name, p.tokens, p.clan_id, c.name
+            SELECT p.uuid, p.last_name, p.rank_id, r.display_name, r.color, p.tokens, p.clan_id, c.name
             FROM players p
             JOIN ranks r ON r.id = p.rank_id
             LEFT JOIN clans c ON c.id = p.clan_id
@@ -129,6 +132,14 @@ public final class PlayerRepository {
         }
     }
 
+    private static void migrateRankColorColumn(Statement st) throws SQLException {
+        try {
+            st.execute("ALTER TABLE ranks ADD COLUMN color TEXT NOT NULL DEFAULT 'GREEN'");
+        } catch (SQLException ignored) {
+            // колонка уже есть
+        }
+    }
+
     private static PlayerProfile mapRow(ResultSet rs) throws SQLException {
         int clanIdRaw = rs.getInt("clan_id");
         Integer clanId = rs.wasNull() ? null : clanIdRaw;
@@ -138,6 +149,7 @@ public final class PlayerRepository {
                 rs.getString("last_name"),
                 rs.getString("rank_id"),
                 rs.getString("display_name"),
+                rs.getString("color"),
                 rs.getLong("tokens"),
                 clanId,
                 clanName

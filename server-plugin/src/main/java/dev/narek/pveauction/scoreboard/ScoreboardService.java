@@ -3,6 +3,7 @@ package dev.narek.pveauction.scoreboard;
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.model.PlayerProfile;
 import dev.narek.pveauction.util.GuiItems;
+import dev.narek.pveauction.util.RankColors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -41,7 +42,10 @@ public final class ScoreboardService {
 
         List<Component> lines = new ArrayList<>();
         lines.add(Component.empty());
-        lines.add(Component.text("[" + profile.rankDisplayName() + "]", NamedTextColor.GREEN));
+        lines.add(Component.text(
+                "[" + profile.rankDisplayName() + "]",
+                RankColors.parse(profile.rankColor())
+        ));
         lines.add(Component.text("Клан: ", NamedTextColor.GRAY)
                 .append(Component.text(profile.clanDisplay(), NamedTextColor.WHITE)));
         lines.add(Component.text("Монет: ", NamedTextColor.GRAY)

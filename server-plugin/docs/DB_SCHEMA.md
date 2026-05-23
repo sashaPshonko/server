@@ -12,6 +12,7 @@ erDiagram
     ranks {
         TEXT id PK
         TEXT display_name
+        TEXT color
         INTEGER sort_order
     }
 
@@ -42,9 +43,17 @@ erDiagram
 |---------------|------|-----------------------------------|
 | `id`          | TEXT | PK, например `player`, `vip`      |
 | `display_name`| TEXT | То, что в скобках: `Игрок`        |
+| `color`       | TEXT | Цвет ранга: `GREEN`, `RED`, `GOLD`… (Adventure) |
 | `sort_order`  | INT  | Сортировка в будущем              |
 
-Стартовая запись: `player` → **Игрок**.
+Стартовая запись: `player` → **Игрок**, цвет **GREEN**.
+
+Пример VIP-ранга:
+```sql
+INSERT INTO ranks (id, display_name, color, sort_order)
+VALUES ('vip', 'VIP', 'GOLD', 10);
+UPDATE players SET rank_id = 'vip' WHERE uuid = '...';
+```
 
 ### `clans` — кланы
 
