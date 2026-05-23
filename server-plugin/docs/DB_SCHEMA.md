@@ -30,6 +30,12 @@ erDiagram
         TEXT rank_id FK
         INTEGER tokens
         INTEGER clan_id FK
+        TEXT logout_world
+        REAL logout_x
+        REAL logout_y
+        REAL logout_z
+        REAL logout_yaw
+        REAL logout_pitch
         INTEGER created_at
         INTEGER updated_at
     }
@@ -74,6 +80,7 @@ UPDATE players SET rank_id = 'vip' WHERE uuid = '...';
 | `rank_id`    | TEXT | FK → `ranks.id`, по умолчанию `player`|
 | `tokens`     | INT  | Токены (внутр. валюта)                 |
 | `clan_id`    | INT  | FK → `clans.id`, NULL = без клана     |
+| `logout_*`   | —    | Последняя позиция при выходе (мир, x,y,z, yaw, pitch) |
 | `created_at` | INT  | Unix ms                               |
 | `updated_at` | INT  | Unix ms                               |
 

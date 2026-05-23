@@ -1,9 +1,11 @@
 package dev.narek.pveauction.listener;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.model.SavedLocation;
 import dev.narek.pveauction.world.RtpTeleportHelper;
 import dev.narek.pveauction.world.WorldTeleportService;
 import dev.narek.pveauction.world.WorldTravelService;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,7 +19,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -42,17 +46,57 @@ public final class SpawnWorldListener implements Listener {
                     return;
                 }
                 worlds.refreshLocations();
-                if (plugin.getConfig().getBoolean("teleport-to-spawn-on-join", true)) {
-                    WorldTeleportService.teleport(plugin, player, worlds.spawnLocation(), ok -> {
-                        if (ok) {
-                            worlds.applySpawnRules(player);
-                        }
-                    });
-                } else if (worlds.isSpawnWorld(player.getWorld())) {
-                    worlds.applySpawnRules(player);
-                }
+                teleportOnJoin(player);
             }
         }.runTaskLater(plugin, 5L);
+    }
+
+    private void teleportOnJoin(Player player) {
+        boolean saveLogout = plugin.getConfig().getBoolean("save-logout-location", true);
+
+        if (saveLogout) {
+            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+                try {
+                    plugin.players().getOrCreate(player.getUniqueId(), player.getName());
+                    Optional<SavedLocation> saved = plugin.players().findLogoutLocation(player.getUniqueId());
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (!player.isOnline()) {
+                            return;
+                        }
+                        if (saved.isPresent()) {
+                            Location target = saved.get().toLocation();
+                            if (target != null) {
+                                WorldTeleportService.teleport(plugin, player, target, ok -> applyWorldRules(player));
+                                return;
+                            }
+                        }
+                        teleportFirstJoin(player);
+                    });
+                } catch (SQLException e) {
+                    plugin.getLogger().severe("Позиция при входе: " + e.getMessage());
+                    plugin.getServer().getScheduler().runTask(plugin, () -> teleportFirstJoin(player));
+                }
+            });
+            return;
+        }
+
+        teleportFirstJoin(player);
+    }
+
+    private void teleportFirstJoin(Player player) {
+        if (plugin.getConfig().getBoolean("teleport-to-spawn-on-join", true)) {
+            WorldTeleportService.teleport(plugin, player, worlds.spawnLocation(), ok -> applyWorldRules(player));
+        } else {
+            applyWorldRules(player);
+        }
+    }
+
+    private void applyWorldRules(Player player) {
+        if (worlds.isSpawnWorld(player.getWorld())) {
+            worlds.applySpawnRules(player);
+        } else if (worlds.isRtpWorld(player.getWorld())) {
+            worlds.applyRtpRules(player);
+        }
     }
 
     @EventHandler
@@ -64,11 +108,7 @@ public final class SpawnWorldListener implements Listener {
                 if (!player.isOnline()) {
                     return;
                 }
-                if (worlds.isSpawnWorld(player.getWorld())) {
-                    worlds.applySpawnRules(player);
-                } else if (worlds.isRtpWorld(player.getWorld())) {
-                    worlds.applyRtpRules(player);
-                }
+                applyWorldRules(player);
             }
         }.runTask(plugin);
     }
@@ -94,9 +134,26 @@ public final class SpawnWorldListener implements Listener {
         );
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        rtpCooldown.remove(event.getPlayer().getUniqueId());
+        Player player = event.getPlayer();
+        rtpCooldown.remove(player.getUniqueId());
+
+        if (!plugin.getConfig().getBoolean("save-logout-location", true)) {
+            return;
+        }
+
+        Location location = player.getLocation().clone();
+        UUID uuid = player.getUniqueId();
+        String name = player.getName();
+        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                plugin.players().getOrCreate(uuid, name);
+                plugin.players().saveLogoutLocation(uuid, location);
+            } catch (SQLException e) {
+                plugin.getLogger().severe("Сохранение позиции: " + e.getMessage());
+            }
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

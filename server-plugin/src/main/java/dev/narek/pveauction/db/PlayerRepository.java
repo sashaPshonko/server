@@ -2,6 +2,8 @@ package dev.narek.pveauction.db;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.model.PlayerProfile;
+import dev.narek.pveauction.model.SavedLocation;
+import org.bukkit.Location;
 
 import java.io.File;
 import java.sql.Connection;
@@ -66,6 +68,7 @@ public final class PlayerRepository {
                     VALUES ('player', 'Игрок', 'GREEN', 0)
                     """);
                 st.execute("UPDATE ranks SET color = 'GREEN' WHERE id = 'player' AND (color IS NULL OR color = '')");
+                migrateLogoutColumns(st);
             }
             connection.setAutoCommit(true);
         } catch (SQLException e) {
@@ -122,6 +125,55 @@ public final class PlayerRepository {
         }
     }
 
+    public void saveLogoutLocation(UUID uuid, Location location) throws SQLException {
+        String sql = """
+            UPDATE players SET
+                logout_world = ?,
+                logout_x = ?,
+                logout_y = ?,
+                logout_z = ?,
+                logout_yaw = ?,
+                logout_pitch = ?,
+                updated_at = ?
+            WHERE uuid = ?
+            """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, location.getWorld().getName());
+            ps.setDouble(2, location.getX());
+            ps.setDouble(3, location.getY());
+            ps.setDouble(4, location.getZ());
+            ps.setFloat(5, location.getYaw());
+            ps.setFloat(6, location.getPitch());
+            ps.setLong(7, System.currentTimeMillis());
+            ps.setString(8, uuid.toString());
+            ps.executeUpdate();
+        }
+    }
+
+    public Optional<SavedLocation> findLogoutLocation(UUID uuid) throws SQLException {
+        String sql = """
+            SELECT logout_world, logout_x, logout_y, logout_z, logout_yaw, logout_pitch
+            FROM players
+            WHERE uuid = ? AND logout_world IS NOT NULL
+            """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, uuid.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(new SavedLocation(
+                        rs.getString("logout_world"),
+                        rs.getDouble("logout_x"),
+                        rs.getDouble("logout_y"),
+                        rs.getDouble("logout_z"),
+                        rs.getFloat("logout_yaw"),
+                        rs.getFloat("logout_pitch")
+                ));
+            }
+        }
+    }
+
     private void touchName(UUID uuid, String name) throws SQLException {
         String sql = "UPDATE players SET last_name = ?, updated_at = ? WHERE uuid = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -137,6 +189,24 @@ public final class PlayerRepository {
             st.execute("ALTER TABLE ranks ADD COLUMN color TEXT NOT NULL DEFAULT 'GREEN'");
         } catch (SQLException ignored) {
             // колонка уже есть
+        }
+    }
+
+    private static void migrateLogoutColumns(Statement st) throws SQLException {
+        String[] alters = {
+                "ALTER TABLE players ADD COLUMN logout_world TEXT",
+                "ALTER TABLE players ADD COLUMN logout_x REAL",
+                "ALTER TABLE players ADD COLUMN logout_y REAL",
+                "ALTER TABLE players ADD COLUMN logout_z REAL",
+                "ALTER TABLE players ADD COLUMN logout_yaw REAL",
+                "ALTER TABLE players ADD COLUMN logout_pitch REAL"
+        };
+        for (String sql : alters) {
+            try {
+                st.execute(sql);
+            } catch (SQLException ignored) {
+                // колонка уже есть
+            }
         }
     }
 

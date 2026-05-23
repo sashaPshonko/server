@@ -1,7 +1,7 @@
 # Скорборд справа
 scoreboard:
   enabled: true
-  title: "4NAREK"
+  title: "4нарек"
   update-ticks: 40
 
 # Макс. активных лотов на одного игрока
@@ -25,7 +25,10 @@ rtp-world-size: 1000
 rtp-border-margin: 40
 rtp-max-attempts: 40
 
-# При входе — на спавн
+# Сохранять место выхода и вернуть при следующем входе
+save-logout-location: true
+
+# Первый вход (нет сохранённой точки) — на спавн
 teleport-to-spawn-on-join: true
 
 # Спавн: /spawn и вход
