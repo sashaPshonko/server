@@ -12,3 +12,8 @@ session.lock
 public-host.txt
 server-plugin/build/
 server-plugin/.gradle/
+plugins/.paper-remapped/
+plugins/PveAuction/
+plugins/Essentials/userdata/
+plugins/Essentials/uuids.bin
+hs_err_pid*.log
