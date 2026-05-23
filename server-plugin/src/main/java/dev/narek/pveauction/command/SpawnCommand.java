@@ -2,6 +2,7 @@ package dev.narek.pveauction.command;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.util.TravelMsg;
+import dev.narek.pveauction.world.WorldTeleportService;
 import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -12,9 +13,11 @@ import org.jetbrains.annotations.NotNull;
 
 public final class SpawnCommand implements CommandExecutor {
 
+    private final PveAuctionPlugin plugin;
     private final WorldTravelService worlds;
 
     public SpawnCommand(PveAuctionPlugin plugin) {
+        this.plugin = plugin;
         this.worlds = plugin.worlds();
     }
 
@@ -40,7 +43,7 @@ public final class SpawnCommand implements CommandExecutor {
             return true;
         }
 
-        player.teleportAsync(target).thenAccept(ok -> {
+        WorldTeleportService.teleport(plugin, player, target, ok -> {
             if (!ok) {
                 TravelMsg.send(player, TravelMsg.err("Не удалось телепортироваться."));
                 return;

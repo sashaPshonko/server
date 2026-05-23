@@ -31,5 +31,10 @@ spawn-rtp-cooldown-ticks: 40
 
 rtp-success-message: "Телепорт в случайное место мира."
 
+# Экран загрузки при переходе в другой мир (спавн ↔ RTP)
+loading-title: "Загрузка"
+loading-subtitle: "Переход в другой мир…"
+loading-min-ms: 600
+
 # /rtp только с карты спавна
 rtp-only-from-spawn-world: true

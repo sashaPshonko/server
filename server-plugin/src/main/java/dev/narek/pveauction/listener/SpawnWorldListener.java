@@ -2,6 +2,7 @@ package dev.narek.pveauction.listener;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.world.RtpTeleportHelper;
+import dev.narek.pveauction.world.WorldTeleportService;
 import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -42,7 +43,7 @@ public final class SpawnWorldListener implements Listener {
                 }
                 worlds.refreshLocations();
                 if (plugin.getConfig().getBoolean("teleport-to-spawn-on-join", true)) {
-                    player.teleportAsync(worlds.spawnLocation()).thenAccept(ok -> {
+                    WorldTeleportService.teleport(plugin, player, worlds.spawnLocation(), ok -> {
                         if (ok) {
                             worlds.applySpawnRules(player);
                         }
