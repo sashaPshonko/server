@@ -1253,7 +1253,7 @@ random-spawn-location: "none"
 random-respawn-location: "none"
 
 # Teleport all joining players to their spawnpoint.
-spawn-on-join: false
+spawn-on-join: all
 # The following value of 'guests' states that all players in the 'guests' group will be teleported to spawn when joining.
 #spawn-on-join: guests
 # The following list value states that all players in the 'guests' or 'admin' groups will be teleported to spawn when joining. 
