@@ -78,7 +78,7 @@ public final class SpawnWorldListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (!worlds.shouldAutoRtpOnSpawn(event.getTo())) {
+        if (!worlds.shouldAutoRtpOnSpawn(event.getFrom(), event.getTo())) {
             return;
         }
         if (rtpCooldown.contains(player.getUniqueId())) {
