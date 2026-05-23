@@ -86,7 +86,7 @@ public final class ClanService {
     }
 
     public void sendClanChat(Player sender, ClanMember member, ClanData clan, PlayerProfile profile, String text) {
-        Component line = plugin.chat().formatClanLine(
+        Component body = plugin.chat().formatClanChatBody(
                 profile,
                 new ChatService.ClanMemberParts(clan.name(), sender.getName(), member.isOwner()),
                 text);
@@ -95,7 +95,7 @@ public final class ClanService {
             for (ClanMember m : clans.listMembers(clan.id())) {
                 Player online = Bukkit.getPlayer(m.playerUuid());
                 if (online != null) {
-                    online.sendMessage(line);
+                    Msg.clan(online, body);
                 }
             }
         } catch (SQLException e) {

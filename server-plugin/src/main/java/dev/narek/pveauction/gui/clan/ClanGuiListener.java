@@ -296,7 +296,11 @@ public final class ClanGuiListener implements Listener {
             if (!member.isOwner()) {
                 throw new IllegalStateException("Только владелец может ставить базу клана.");
             }
-            clans.repo().setClanHome(member.clanId(), player.getLocation());
+            int clanId = member.clanId();
+            String name = player.getName();
+            clans.repo().setClanHome(clanId, player.getLocation());
+            clans.notifyClan(clanId, player.getUniqueId(),
+                    Msg.ok(name + " установил базу клана."));
         });
     }
 
@@ -316,7 +320,11 @@ public final class ClanGuiListener implements Listener {
             if (!clan.hasHome()) {
                 throw new IllegalStateException("База клана не установлена.");
             }
-            clans.repo().clearClanHome(member.clanId());
+            int clanId = member.clanId();
+            String name = player.getName();
+            clans.repo().clearClanHome(clanId);
+            clans.notifyClan(clanId, player.getUniqueId(),
+                    Msg.warn(name + " удалил базу клана."));
         });
     }
 

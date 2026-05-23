@@ -22,23 +22,21 @@ public final class ChatService {
     }
 
     public Component formatLine(PlayerProfile profile, String playerName, boolean global, String message) {
-        String scope = global ? "Мир" : "Локал";
-        NamedTextColor scopeColor = global ? NamedTextColor.GOLD : NamedTextColor.GRAY;
-        return Component.text("[" + scope + "] ", scopeColor, TextDecoration.BOLD)
-                .append(rankTag(profile))
-                .append(Component.text(playerName, NamedTextColor.WHITE, TextDecoration.BOLD))
+        NamedTextColor main = global ? NamedTextColor.GRAY : NamedTextColor.GREEN;
+        return rankTag(profile, global)
+                .append(Component.text(playerName, main, TextDecoration.BOLD))
                 .append(Component.text(": ", NamedTextColor.DARK_GRAY))
-                .append(Component.text(message, NamedTextColor.WHITE));
+                .append(Component.text(message, main));
     }
 
-    public Component formatClanLine(PlayerProfile profile, ClanMemberParts parts, String message) {
-        Component line = Component.text("[Клан] ", NamedTextColor.DARK_AQUA, TextDecoration.BOLD)
-                .append(Component.text(parts.clanName() + " ", NamedTextColor.AQUA))
-                .append(rankTag(profile));
+    /** Тело сообщения для {@link dev.narek.pveauction.util.Msg#clan}. */
+    public Component formatClanChatBody(PlayerProfile profile, ClanMemberParts parts, String message) {
+        Component body = Component.text(parts.clanName() + " ", NamedTextColor.AQUA, TextDecoration.BOLD)
+                .append(rankTag(profile, false));
         if (parts.owner()) {
-            line = line.append(Component.text("★ ", NamedTextColor.GOLD, TextDecoration.BOLD));
+            body = body.append(Component.text("★ ", NamedTextColor.GOLD, TextDecoration.BOLD));
         }
-        return line
+        return body
                 .append(Component.text(parts.playerName(), parts.owner() ? NamedTextColor.GOLD : NamedTextColor.AQUA,
                         TextDecoration.BOLD))
                 .append(Component.text(": ", NamedTextColor.DARK_GRAY))
@@ -46,6 +44,13 @@ public final class ChatService {
     }
 
     public static Component rankTag(PlayerProfile profile) {
+        return rankTag(profile, false);
+    }
+
+    private static Component rankTag(PlayerProfile profile, boolean global) {
+        if (global) {
+            return Component.text("[" + profile.rankDisplayName() + "] ", NamedTextColor.GRAY);
+        }
         NamedTextColor color = RankColors.parse(profile.rankColor());
         return Component.text("[" + profile.rankDisplayName() + "] ", color);
     }
