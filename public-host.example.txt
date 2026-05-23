@@ -1,0 +1,8 @@
+# Адрес для друзей — Сетевая игра → Прямое подключение
+# cp public-host.example.txt public-host.txt → одна строка, без порта
+#
+# Tailscale (бесплатно):  100.64.x.x     (tailscale ip -4)
+# Проброс порта / VPS:    123.45.67.89   (curl ifconfig.me или IP VPS)
+# Только Wi‑Fi дома:      192.168.0.85
+#
+100.64.0.1

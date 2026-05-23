@@ -1,0 +1,14 @@
+paper.jar
+paper-*.jar
+cache/
+libraries/
+versions/
+logs/
+world/
+world_nether/
+world_the_end/
+*.log
+session.lock
+public-host.txt
+server-plugin/build/
+server-plugin/.gradle/

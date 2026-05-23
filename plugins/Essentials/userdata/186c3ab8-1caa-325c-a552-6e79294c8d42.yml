@@ -1,0 +1,38 @@
+teleportenabled: true
+teleportauto: false
+godmode: false
+muted: false
+jailed: false
+ip-address: 127.0.0.1
+afk: false
+socialspy: false
+npc: false
+powertoolsenabled: true
+accepting-pay: true
+baltop-exempt: false
+timestamps:
+  lastteleport: 1779539127513
+  lastheal: 0
+  mute: 0
+  jail: 0
+  onlinejail: 0
+  logout: 1779542587932
+  login: 1779542625019
+money: '60000.0'
+last-account-name: amnebycher0mu
+lastlocation:
+  world: 78fc9872-cc24-4513-a11a-9cdc9d0759dd
+  world-name: world
+  x: 141.67506325531807
+  y: 115.62746763068607
+  z: 170.30000001192093
+  yaw: 140.0450897216797
+  pitch: 9.832626342773438
+logoutlocation:
+  world: 78fc9872-cc24-4513-a11a-9cdc9d0759dd
+  world-name: world
+  x: -12.223734662393312
+  y: 97.0
+  z: 73.52310835571149
+  yaw: -165.24024963378906
+  pitch: 33.820838928222656

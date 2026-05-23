@@ -1,0 +1,16 @@
+[Unit]
+Description=4narek Paper Minecraft
+After=network.target
+
+[Service]
+Type=simple
+User=minecraft
+WorkingDirectory=/opt/minecraft
+ExecStart=/opt/minecraft/start.sh
+Restart=on-failure
+RestartSec=10
+Environment=MIN_RAM=4G
+Environment=MAX_RAM=4G
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+name: PveAuction
+version: ${version}
+main: dev.narek.pveauction.PveAuctionPlugin
+api-version: "1.21"
+description: PvE аукцион — GUI и SQLite
+authors: [narek]
+softdepend: [Vault]
+
+commands:
+  ah:
+    description: Аукцион
+    usage: /ah [sell <цена>]
+  admin:
+    description: Админка сервера
+    usage: /admin [give <ник> <сумма>]
+
+permissions:
+  pveauction.use:
+    description: Аукцион и продажа
+    default: true
+  pveauction.admin:
+    description: Админка — креатив, выдача денег
+    default: op
