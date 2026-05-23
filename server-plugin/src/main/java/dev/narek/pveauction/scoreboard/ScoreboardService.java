@@ -43,10 +43,9 @@ public final class ScoreboardService {
 
         List<Component> lines = new ArrayList<>();
         lines.add(Component.empty());
-        lines.add(Component.text("[", rankColor)
-                .append(Component.text(profile.rankDisplayName(), rankColor))
-                .append(Component.text("] ", rankColor))
-                .append(Component.text(player.getName(), NamedTextColor.WHITE)));
+        lines.add(Component.text(player.getName(), NamedTextColor.WHITE));
+        lines.add(Component.text("Ранг: ", NamedTextColor.GRAY)
+                .append(Component.text(profile.rankDisplayName(), rankColor)));
         lines.add(Component.text("Клан: ", NamedTextColor.GRAY)
                 .append(Component.text(profile.clanDisplay(), NamedTextColor.WHITE)));
         lines.add(Component.text("Монет: ", NamedTextColor.GRAY)
