@@ -55,7 +55,14 @@ JAVA_BIN=$(find_java) || {
 
 JAVA_VER=$("${JAVA_BIN}" -version 2>&1 | head -1)
 
-# Локально: 2G. На VPS: MIN_RAM=4G MAX_RAM=4G ./start.sh
+# VPS 1 GB: MIN_RAM=512M MAX_RAM=768M ./start.sh
+if [[ -z "${MIN_RAM:-}" && "$(uname -s)" == "Linux" ]]; then
+  mem_kb=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+  if [[ -n "${mem_kb}" && "${mem_kb}" -lt 2500000 ]]; then
+    MIN_RAM=512M
+    MAX_RAM=768M
+  fi
+fi
 MIN_RAM="${MIN_RAM:-2G}"
 MAX_RAM="${MAX_RAM:-2G}"
 
