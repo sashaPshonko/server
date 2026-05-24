@@ -25,7 +25,6 @@ import java.util.Optional;
 public final class ShopCategoryMenu implements InventoryHolder {
 
     public static final int SLOT_BACK = 49;
-    public static final int SLOT_MODE = 53;
     private static final int[] CATEGORY_SLOTS = {20, 21, 22, 23, 24, 31};
 
     private final PveAuctionPlugin plugin;
@@ -67,26 +66,11 @@ public final class ShopCategoryMenu implements InventoryHolder {
 
         inventory.setItem(4, GuiItems.button(Material.GOLD_INGOT,
                 Component.text("Скупка ресурсов", NamedTextColor.GOLD, TextDecoration.BOLD),
-                Component.text("Выбери категорию", NamedTextColor.GRAY)));
+                Component.text("Выбери категорию", NamedTextColor.GRAY),
+                Component.text("Shift+ЛКМ — бонус клана (владелец)", NamedTextColor.DARK_GRAY)));
 
         inventory.setItem(SLOT_BACK, GuiItems.button(Material.ARROW,
                 Component.text("НАЗАД", NamedTextColor.RED, TextDecoration.BOLD)));
-        fillModeButton();
-    }
-
-    private void fillModeButton() {
-        var mode = shop.sellMode(viewer);
-        var lines = new java.util.ArrayList<Component>();
-        lines.add(Component.text("[ЛКМ] сменить режим сдачи", NamedTextColor.GOLD));
-        lines.add(Component.empty());
-        for (var m : dev.narek.pveauction.shop.SellAmountMode.values()) {
-            NamedTextColor c = m == mode ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY;
-            String arrow = m == mode ? ">> " : "   ";
-            lines.add(Component.text(arrow + "Продать " + m.label(), c));
-        }
-        inventory.setItem(SLOT_MODE, GuiItems.button(Material.HOPPER,
-                Component.text("Сдача: " + mode.label(), NamedTextColor.YELLOW, TextDecoration.BOLD),
-                lines.toArray(Component[]::new)));
     }
 
     private ItemStack categoryIcon(ShopCategory cat, Integer clanId, Optional<ShopCategory> focus) throws SQLException {
@@ -96,9 +80,9 @@ public final class ShopCategoryMenu implements InventoryHolder {
             ClanCategoryProgress p = shop.categoryProgress(clanId, cat);
             double mult = ShopLeveling.multiplier(plugin, p.level());
             lore.add(Component.text("Уровень: ", NamedTextColor.GRAY)
-                    .append(Component.text(String.valueOf(p.level()), NamedTextColor.LIGHT_PURPLE)));
-            lore.add(Component.text("Прогресс: ", NamedTextColor.GRAY)
-                    .append(Component.text(ShopLeveling.progressText(plugin, p.level(), p.earnedCoins()), NamedTextColor.WHITE)));
+                    .append(Component.text(String.valueOf(p.level()), NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD)));
+            lore.add(ShopLeveling.progressBar(plugin, p.level(), p.earnedCoins()));
+            lore.add(ShopLeveling.progressLoreLine(plugin, p.level(), p.earnedCoins()));
             lore.add(Component.text("Множитель: ", NamedTextColor.GRAY)
                     .append(Component.text("x" + String.format("%.2f", mult), NamedTextColor.GREEN)));
             if (focus.isPresent() && focus.get() == cat) {

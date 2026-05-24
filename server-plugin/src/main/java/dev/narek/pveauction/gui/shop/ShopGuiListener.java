@@ -1,6 +1,7 @@
 package dev.narek.pveauction.gui.shop;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.shop.ClanCategoryProgress;
 import dev.narek.pveauction.shop.ShopCategory;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.Msg;
@@ -9,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -96,18 +98,6 @@ public final class ShopGuiListener implements Listener {
             return;
         }
 
-        if (raw == ShopCategoryMenu.SLOT_MODE) {
-            shop.cycleSellMode(player);
-            runNext(() -> {
-                try {
-                    menu.reload();
-                } catch (SQLException e) {
-                    dbError(player, e);
-                }
-            });
-            return;
-        }
-
         if (raw == ShopCategoryMenu.SLOT_BACK) {
             runNext(() -> ShopMainMenu.open(player));
             return;
@@ -123,12 +113,12 @@ public final class ShopGuiListener implements Listener {
             runNext(() -> {
                 try {
                     shop.setClanFocus(player, cat);
-                    Msg.clan(player, Msg.ok("Бонус клана: «" + cat.displayName() + "»"));
+                    Msg.shop(player, Msg.ok("Бонус клана: «" + cat.displayName() + "»"));
                     menu.reload();
                 } catch (SQLException e) {
                     dbError(player, e);
                 } catch (IllegalStateException e) {
-                    Msg.server(player, Msg.err(e.getMessage()));
+                    Msg.shop(player, Msg.err(e.getMessage()));
                 }
             });
             return;
@@ -147,12 +137,6 @@ public final class ShopGuiListener implements Listener {
             return;
         }
 
-        if (raw == ShopSellMenu.SLOT_MODE) {
-            shop.cycleSellMode(player);
-            runNext(menu::refresh);
-            return;
-        }
-
         if (raw == ShopSellMenu.SLOT_BACK) {
             runNext(() -> openCategories(player));
             return;
@@ -164,6 +148,12 @@ public final class ShopGuiListener implements Listener {
         }
         Material material = matOpt.get();
         ShopCategory cat = menu.category();
+
+        if (isRightClick(event)) {
+            shop.cycleSellMode(player, material);
+            runNext(menu::refresh);
+            return;
+        }
 
         runNext(() -> {
             try {
@@ -186,6 +176,13 @@ public final class ShopGuiListener implements Listener {
         });
     }
 
+    private static boolean isRightClick(InventoryClickEvent event) {
+        ClickType click = event.getClick();
+        return click == ClickType.RIGHT
+                || click == ClickType.SHIFT_RIGHT
+                || event.isRightClick();
+    }
+
     private void openCategories(Player player) {
         try {
             ShopCategoryMenu.open(plugin, shop, player);
@@ -197,11 +194,16 @@ public final class ShopGuiListener implements Listener {
     private void openSell(Player player, ShopCategory category) {
         try {
             double mult = 1.0;
+            ClanCategoryProgress progress = null;
+            boolean focusHere = false;
             var member = plugin.clans().repo().findMember(player.getUniqueId());
             if (member.isPresent()) {
-                mult = shop.clanMultiplier(member.get().clanId(), category);
+                int clanId = member.get().clanId();
+                mult = shop.clanMultiplier(clanId, category);
+                progress = shop.categoryProgress(clanId, category);
+                focusHere = shop.focusCategory(clanId).map(c -> c == category).orElse(false);
             }
-            ShopSellMenu.open(plugin, shop, player, category, mult);
+            ShopSellMenu.open(plugin, shop, player, category, mult, progress, focusHere);
         } catch (SQLException e) {
             dbError(player, e);
         }
@@ -213,6 +215,6 @@ public final class ShopGuiListener implements Listener {
 
     private void dbError(Player player, SQLException e) {
         plugin.getLogger().severe(e.getMessage());
-        Msg.server(player, Msg.err("Ошибка базы данных."));
+        Msg.shop(player, Msg.err("Ошибка базы данных."));
     }
 }

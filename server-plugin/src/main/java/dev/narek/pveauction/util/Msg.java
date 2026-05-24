@@ -12,6 +12,7 @@ public final class Msg {
     private static final Component PREFIX_CLAN = prefix("КЛАН", NamedTextColor.GOLD);
     private static final Component PREFIX_PAY = prefix("ПЕРЕВОД", NamedTextColor.GREEN);
     private static final Component PREFIX_SERVER = prefix("4NAREK", NamedTextColor.YELLOW);
+    private static final Component PREFIX_SHOP = prefix("СКУПКА", NamedTextColor.GREEN);
 
     private Msg() {}
 
@@ -40,6 +41,10 @@ public final class Msg {
 
     public static void server(Player player, Component body) {
         player.sendMessage(PREFIX_SERVER.append(body));
+    }
+
+    public static void shop(Player player, Component body) {
+        player.sendMessage(PREFIX_SHOP.append(body));
     }
 
     public static void send(CommandSender sender, Component body) {

@@ -5,6 +5,7 @@ import dev.narek.pveauction.db.ShopRepository;
 import dev.narek.pveauction.model.ClanMember;
 import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.Msg;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -20,7 +21,7 @@ public final class ShopService {
 
     private final PveAuctionPlugin plugin;
     private final ShopRepository shopDb;
-    private final Map<UUID, SellAmountMode> sellModes = new ConcurrentHashMap<>();
+    private final Map<UUID, Map<Material, SellAmountMode>> sellModes = new ConcurrentHashMap<>();
 
     public ShopService(PveAuctionPlugin plugin, ShopRepository shopDb) {
         this.plugin = plugin;
@@ -31,13 +32,21 @@ public final class ShopService {
         return shopDb;
     }
 
-    public SellAmountMode sellMode(Player player) {
-        return sellModes.getOrDefault(player.getUniqueId(), SellAmountMode.ONE);
+    public SellAmountMode sellMode(Player player, Material material) {
+        Map<Material, SellAmountMode> perItem = sellModes.get(player.getUniqueId());
+        if (perItem == null) {
+            return SellAmountMode.ONE;
+        }
+        return perItem.getOrDefault(material, SellAmountMode.ONE);
     }
 
-    public SellAmountMode cycleSellMode(Player player) {
-        SellAmountMode next = sellMode(player).next();
-        sellModes.put(player.getUniqueId(), next);
+    public SellAmountMode cycleSellMode(Player player, Material material) {
+        Map<Material, SellAmountMode> perItem = sellModes.computeIfAbsent(
+                player.getUniqueId(),
+                ignored -> new ConcurrentHashMap<>()
+        );
+        SellAmountMode next = sellMode(player, material).next();
+        perItem.put(material, next);
         return next;
     }
 
@@ -63,7 +72,7 @@ public final class ShopService {
             return SellResult.fail("Экономика не подключена.");
         }
 
-        SellAmountMode mode = sellMode(player);
+        SellAmountMode mode = sellMode(player, material);
         int count = mode.resolveCount(player, material);
         if (count <= 0) {
             return SellResult.fail("Нет предметов в инвентаре.");
@@ -104,9 +113,20 @@ public final class ShopService {
 
     private void notifyClanLevelUp(int clanId, ShopCategory category, int level) {
         double mult = ShopLeveling.multiplier(plugin, level);
-        var body = Msg.ok("Категория «" + category.displayName() + "» — уровень " + level
+        Component body = Msg.ok("Категория «" + category.displayName() + "» — уровень " + level
                 + " (x" + String.format("%.2f", mult) + ")");
-        plugin.clans().notifyClan(clanId, null, body);
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            try {
+                for (var m : plugin.clans().repo().listMembers(clanId)) {
+                    Player online = Bukkit.getPlayer(m.playerUuid());
+                    if (online != null) {
+                        Msg.shop(online, body);
+                    }
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().severe(e.getMessage());
+            }
+        });
     }
 
     public void setClanFocus(Player player, ShopCategory category) throws SQLException {
@@ -176,14 +196,14 @@ public final class ShopService {
 
         public void send(Player player) {
             if (!success) {
-                Msg.server(player, Msg.err(error));
+                Msg.shop(player, Msg.err(error));
                 return;
             }
-            Msg.server(player, Msg.ok("Сдано " + count + " шт. за ")
+            Msg.shop(player, Msg.ok("Сдано " + count + " шт. за ")
                     .append(Msg.money(total))
                     .append(Msg.ok(multiplier > 1.001 ? " (x" + String.format("%.2f", multiplier) + ")" : "")));
             if (clanLeveled) {
-                Msg.clan(player, Msg.info("Клан прокачал категорию!"));
+                Msg.shop(player, Msg.info("Клан прокачал категорию!"));
             }
         }
     }

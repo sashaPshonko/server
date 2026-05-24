@@ -82,7 +82,6 @@ public enum ShopCategory {
             entry(Material.BOWL, 1),
             entry(Material.LEATHER, 4),
             entry(Material.STRING, 3),
-            entry(Material.BONE, 3),
             entry(Material.INK_SAC, 4),
             entry(Material.SADDLE, 55),
             entry(Material.NAME_TAG, 80)
