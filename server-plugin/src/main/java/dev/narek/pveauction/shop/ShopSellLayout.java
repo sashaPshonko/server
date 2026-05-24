@@ -10,29 +10,44 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Раскладка: в колонке сверху сырое, снизу жареное; блоки по центру ряда. */
+/**
+ * Сырое над жареным в одной колонке, строки вплотную.
+ * Вся сетка по центру сундука (9 колонок × 4 ряда под товары).
+ */
 public final class ShopSellLayout {
 
-    private static final int COLS_PER_ROW = 7;
-    private static final int[][] BANDS = {
-            {10, 19},
-            {28, 37}
-    };
+    private static final int WIDTH = 9;
+    private static final int MAX_COLS = 9;
+    /** Ряды 1–4 сундука (под шапкой, над низом). */
+    private static final int CONTENT_ROWS = 4;
+    private static final int CONTENT_ROW_START = 1;
 
     private ShopSellLayout() {}
 
     public static Map<Material, Integer> slotsFor(List<ShopEntry> entries) {
         List<Placement> placements = buildPlacements(entries);
         Map<Material, Integer> slots = new HashMap<>();
+        if (placements.isEmpty()) {
+            return slots;
+        }
+
+        int bandsNeeded = (placements.size() + MAX_COLS - 1) / MAX_COLS;
+        int rowPairs = bandsNeeded * 2;
+        int firstRow = CONTENT_ROW_START + Math.max(0, (CONTENT_ROWS - rowPairs) / 2);
+
         int index = 0;
-        int band = 0;
-        while (index < placements.size() && band < BANDS.length) {
-            int count = Math.min(COLS_PER_ROW, placements.size() - index);
-            int colOffset = (COLS_PER_ROW - count) / 2;
+        for (int band = 0; band < bandsNeeded && index < placements.size(); band++) {
+            int count = Math.min(MAX_COLS, placements.size() - index);
+            int colOffset = (WIDTH - count) / 2;
+            int topRow = firstRow + band * 2;
+            int bottomRow = topRow + 1;
+            int topBase = topRow * WIDTH;
+            int bottomBase = bottomRow * WIDTH;
+
             for (int c = 0; c < count; c++) {
                 Placement placement = placements.get(index++);
-                int top = BANDS[band][0] + colOffset + c;
-                int bottom = BANDS[band][1] + colOffset + c;
+                int top = topBase + colOffset + c;
+                int bottom = bottomBase + colOffset + c;
                 if (placement.cooked() != null) {
                     slots.put(placement.raw(), top);
                     slots.put(placement.cooked(), bottom);
@@ -40,7 +55,6 @@ public final class ShopSellLayout {
                     slots.put(placement.material(), top);
                 }
             }
-            band++;
         }
         return slots;
     }

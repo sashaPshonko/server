@@ -54,7 +54,7 @@ public final class ShopSellMenu implements InventoryHolder {
 
     private void fill() {
         inventory.clear();
-        ShopGuiLayout.fillChest54(inventory);
+        ShopGuiLayout.fillChest54Sell(inventory);
 
         double multiplier = 1.0;
         ClanCategoryProgress clanProgress = null;
@@ -110,7 +110,7 @@ public final class ShopSellMenu implements InventoryHolder {
             lore.add(Component.text("Вступи в клан для прокачки", NamedTextColor.DARK_GRAY));
         }
         lore.add(Component.empty());
-        lore.add(Component.text("Сырое сверху · жареное снизу", NamedTextColor.GRAY));
+        lore.add(Component.text("Сырое над жареным", NamedTextColor.GRAY));
         return GuiItems.button(Material.BOOK,
                 Component.text(category.displayName(), NamedTextColor.GOLD, TextDecoration.BOLD),
                 lore.toArray(Component[]::new));

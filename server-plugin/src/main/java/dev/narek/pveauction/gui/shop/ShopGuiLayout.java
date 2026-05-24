@@ -25,6 +25,19 @@ public final class ShopGuiLayout {
         }
     }
 
+    /** Скупка: только верх/низ чёрные, без боковых рамок — 9 колонок под товары. */
+    public static void fillChest54Sell(Inventory inventory) {
+        ItemStack black = GuiItems.decorPane(Material.BLACK_STAINED_GLASS_PANE, " ");
+        ItemStack gray = GuiItems.decorPane(Material.GRAY_STAINED_GLASS_PANE, " ");
+        for (int i = 0; i < 54; i++) {
+            inventory.setItem(i, gray);
+        }
+        for (int col = 0; col < 9; col++) {
+            inventory.setItem(col, black);
+            inventory.setItem(45 + col, black);
+        }
+    }
+
     public static void fillChest27(Inventory inventory) {
         ItemStack black = GuiItems.decorPane(Material.BLACK_STAINED_GLASS_PANE, " ");
         ItemStack gray = GuiItems.decorPane(Material.GRAY_STAINED_GLASS_PANE, " ");
