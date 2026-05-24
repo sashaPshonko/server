@@ -44,4 +44,7 @@ rm -f ../plugins/PveAuction-*.jar
 cp "${JAR}" ../plugins/
 echo "Скопировано: ../plugins/$(basename "${JAR}")"
 echo "MD5: $(md5 -q "${JAR}" 2>/dev/null || md5sum "${JAR}" | cut -d' ' -f1)"
-echo "Перезапусти сервер и в игре: /ah, /rtp, /spawn"
+echo ""
+echo "Локальный Paper: cd ../.. && ./start.sh  (или перезапуск уже запущенного сервера)"
+echo "Удалённый VPS:   ./deploy-remote.sh root@IP   (не боты 4narek-1.12)"
+echo "В игре проверка: /shop → книга «Сборка: 0.1.1»"
