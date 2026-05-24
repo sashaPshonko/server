@@ -29,7 +29,7 @@ import java.util.List;
 public final class ShopSellMenu implements InventoryHolder {
 
     /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
-    public static final String LAYOUT_BUILD = "0.1.5";
+    public static final String LAYOUT_BUILD = "0.1.6";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -127,18 +127,18 @@ public final class ShopSellMenu implements InventoryHolder {
     private void placeFisher(double multiplier) {
         for (ShopEntry entry : category.entries()) {
             int slot = switch (entry.material()) {
-                case COD -> 19;
-                case COOKED_COD -> 28;
-                case SALMON -> 20;
-                case COOKED_SALMON -> 29;
-                case TROPICAL_FISH -> 21;
-                case PUFFERFISH -> 22;
-                case NAUTILUS_SHELL -> 23;
-                case LILY_PAD -> 24;
-                case LEATHER -> 30;
-                case INK_SAC -> 31;
-                case SADDLE -> 32;
-                case NAME_TAG -> 33;
+                case COD -> 20;
+                case COOKED_COD -> 29;
+                case SALMON -> 21;
+                case COOKED_SALMON -> 30;
+                case TROPICAL_FISH -> 22;
+                case PUFFERFISH -> 23;
+                case NAUTILUS_SHELL -> 24;
+                case LILY_PAD -> 25;
+                case LEATHER -> 31;
+                case INK_SAC -> 32;
+                case SADDLE -> 33;
+                case NAME_TAG -> 34;
                 default -> -1;
             };
             put(entry, slot, multiplier);
@@ -154,12 +154,12 @@ public final class ShopSellMenu implements InventoryHolder {
                 case STRING -> 23;
                 case BLAZE_ROD -> 24;
                 case BREEZE_ROD -> 25;
-                case SLIME_BALL -> 30;
-                case MAGMA_CREAM -> 31;
-                case GUNPOWDER -> 32;
-                case ENDER_PEARL -> 33;
-                case PRISMARINE_SHARD -> 34;
-                case SHULKER_SHELL -> 35;
+                case SLIME_BALL -> 29;
+                case MAGMA_CREAM -> 30;
+                case GUNPOWDER -> 31;
+                case ENDER_PEARL -> 32;
+                case PRISMARINE_SHARD -> 33;
+                case SHULKER_SHELL -> 34;
                 default -> -1;
             };
             put(entry, slot, multiplier);
