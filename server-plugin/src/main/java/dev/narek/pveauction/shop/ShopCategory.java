@@ -64,9 +64,9 @@ public enum ShopCategory {
     )),
     FISHER("Рыбак", Material.FISHING_ROD, List.of(
             entry(Material.COD, 5),
-            entry(Material.COOKED_COD, 10),
+            entry(Material.COOKED_COD, 6),
             entry(Material.SALMON, 6),
-            entry(Material.COOKED_SALMON, 12),
+            entry(Material.COOKED_SALMON, 7),
             entry(Material.TROPICAL_FISH, 8),
             entry(Material.PUFFERFISH, 6),
             entry(Material.NAUTILUS_SHELL, 45),

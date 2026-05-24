@@ -1,10 +1,7 @@
 package dev.narek.pveauction.gui.shop;
 
 /**
- * Только для меню сдачи предметов.
- * ≤9 — один ряд по центру.
- * Чётное 10+ — два ряда поровну.
- * Нечётное — один предмет сверху по центру, остальное два ряда 50/50.
+ * ≤5 — один ряд; 6+ чётное — два ряда; 6+ нечётное — 1 сверху + два рява снизу.
  */
 public final class ShopGuiGridLayout {
 
@@ -14,8 +11,20 @@ public final class ShopGuiGridLayout {
 
     private ShopGuiGridLayout() {}
 
+    public static int blockRows(int count) {
+        if (count <= 5) {
+            return 1;
+        }
+        if (count % 2 == 1) {
+            return 3;
+        }
+        return 2;
+    }
+
     public static int[] slotsForCount(int count) {
-        return slotsForCount(count, 0, WIDTH, CONTENT_ROW_START, CONTENT_ROWS);
+        int rows = blockRows(count);
+        int firstRow = CONTENT_ROW_START + Math.max(0, (CONTENT_ROWS - rows) / 2);
+        return slotsForCount(count, 0, WIDTH, firstRow, rows);
     }
 
     public static int[] slotsForCount(
@@ -23,30 +32,23 @@ public final class ShopGuiGridLayout {
             int areaStartCol,
             int areaWidth,
             int contentRowStart,
-            int contentRowsAvailable
+            int contentRowsUsed
     ) {
         if (count <= 0) {
             return new int[0];
         }
-        if (count <= 9) {
-            return oneRow(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable, 1);
+        if (count <= 5) {
+            return oneRow(count, areaStartCol, areaWidth, contentRowStart, contentRowsUsed);
         }
         if (count % 2 == 1) {
-            return oddLayout(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable);
+            return oddLayout(count, areaStartCol, areaWidth, contentRowStart, contentRowsUsed);
         }
-        return twoRows(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable);
+        return twoRows(count, areaStartCol, areaWidth, contentRowStart, contentRowsUsed);
     }
 
-    private static int[] oneRow(
-            int count,
-            int areaStart,
-            int areaWidth,
-            int rowStart,
-            int rowsAvail,
-            int usedRows
-    ) {
+    private static int[] oneRow(int count, int areaStart, int areaWidth, int rowStart, int rowsUsed) {
         int[] slots = new int[count];
-        int firstRow = rowStart + Math.max(0, (rowsAvail - usedRows) / 2);
+        int firstRow = rowStart + Math.max(0, (rowsUsed - 1) / 2);
         int colOffset = areaStart + Math.max(0, (areaWidth - count) / 2);
         for (int i = 0; i < count; i++) {
             slots[i] = firstRow * WIDTH + colOffset + i;
@@ -54,10 +56,10 @@ public final class ShopGuiGridLayout {
         return slots;
     }
 
-    private static int[] twoRows(int count, int areaStart, int areaWidth, int rowStart, int rowsAvail) {
+    private static int[] twoRows(int count, int areaStart, int areaWidth, int rowStart, int rowsUsed) {
         int[] slots = new int[count];
         int perRow = count / 2;
-        int firstRow = rowStart + Math.max(0, (rowsAvail - 2) / 2);
+        int firstRow = rowStart + Math.max(0, (rowsUsed - 2) / 2);
         int index = 0;
         for (int r = 0; r < 2; r++) {
             int colOffset = areaStart + Math.max(0, (areaWidth - perRow) / 2);
@@ -68,11 +70,11 @@ public final class ShopGuiGridLayout {
         return slots;
     }
 
-    private static int[] oddLayout(int count, int areaStart, int areaWidth, int rowStart, int rowsAvail) {
+    private static int[] oddLayout(int count, int areaStart, int areaWidth, int rowStart, int rowsUsed) {
         int[] slots = new int[count];
         int rest = count - 1;
         int perRow = rest / 2;
-        int firstRow = rowStart + Math.max(0, (rowsAvail - 3) / 2);
+        int firstRow = rowStart + Math.max(0, (rowsUsed - 3) / 2);
 
         int topCol = areaStart + (areaWidth - 1) / 2;
         slots[0] = firstRow * WIDTH + topCol;
