@@ -7,7 +7,7 @@ import dev.narek.pveauction.shop.ShopCatalog;
 import dev.narek.pveauction.shop.ShopCategory;
 import dev.narek.pveauction.shop.ShopEntry;
 import dev.narek.pveauction.shop.ShopLeveling;
-import dev.narek.pveauction.shop.ShopSellSlots;
+import dev.narek.pveauction.shop.ShopSellLayout;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.GuiText;
@@ -25,9 +25,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public final class ShopSellMenu implements InventoryHolder {
+
+    /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
+    public static final String LAYOUT_BUILD = "0.1.1";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -72,27 +74,162 @@ public final class ShopSellMenu implements InventoryHolder {
         }
 
         inventory.setItem(SLOT_INFO, headerItem(multiplier, clanProgress, clanFocusHere));
-
-        List<ShopEntry> entries = category.entries();
-        Map<Material, Integer> slots = ShopSellSlots.forCategory(category, entries);
-        for (ShopEntry entry : entries) {
-            Integer slot = slots.get(entry.material());
-            if (slot == null) {
-                plugin.getLogger().warning("Shop: нет слота для " + entry.material() + " в " + category.id());
-                continue;
-            }
-            long unit = Math.max(1, Math.round(entry.basePrice() * multiplier));
-            SellAmountMode mode = shop.sellMode(viewer, entry.material());
-            int inInv = SellAmountMode.countInInventory(viewer, entry);
-            inventory.setItem(slot, sellIcon(entry, unit, inInv, mode));
-        }
-
+        placeItemsManual(multiplier);
         inventory.setItem(SLOT_BACK, GuiItems.button(Material.ARROW,
                 Component.text("НАЗАД", NamedTextColor.RED, TextDecoration.BOLD)));
     }
 
+    /** Ручные слоты — без автосетки. */
+    private void placeItemsManual(double multiplier) {
+        switch (category) {
+            case FARMER -> placeFarmer(multiplier);
+            case FOOD -> placeFood(multiplier);
+            case FISHER -> placeFisher(multiplier);
+            case LOOT -> placeLoot(multiplier);
+            case MINER -> placeMiner(multiplier);
+            case BUTCHER -> placeButcher(multiplier);
+            default -> placeAuto(multiplier);
+        }
+    }
+
+    private void placeFarmer(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case COCOA_BEANS -> 20;
+                case NETHER_WART -> 21;
+                case CHORUS_FRUIT -> 22;
+                case SUGAR_CANE -> 29;
+                case CACTUS -> 30;
+                case OAK_LOG -> 31;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeFood(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case CARROT -> 20;
+                case POTATO -> 21;
+                case BEETROOT -> 22;
+                case SWEET_BERRIES -> 23;
+                case GLOW_BERRIES -> 29;
+                case WHEAT -> 30;
+                case MELON_SLICE -> 31;
+                case PUMPKIN -> 32;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeFisher(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case COD -> 18;
+                case COOKED_COD -> 27;
+                case SALMON -> 19;
+                case COOKED_SALMON -> 28;
+                case TROPICAL_FISH -> 21;
+                case PUFFERFISH -> 22;
+                case NAUTILUS_SHELL -> 23;
+                case LILY_PAD -> 24;
+                case BOWL -> 25;
+                case LEATHER -> 30;
+                case STRING -> 31;
+                case INK_SAC -> 32;
+                case SADDLE -> 33;
+                case NAME_TAG -> 34;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeLoot(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case SPIDER_EYE -> 13;
+                case ROTTEN_FLESH -> 20;
+                case BONE -> 21;
+                case BLAZE_ROD -> 22;
+                case BREEZE_ROD -> 23;
+                case SLIME_BALL -> 24;
+                case MAGMA_CREAM -> 29;
+                case GUNPOWDER -> 30;
+                case ENDER_PEARL -> 31;
+                case PRISMARINE_SHARD -> 32;
+                case SHULKER_SHELL -> 33;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeMiner(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case COAL -> 13;
+                case LAPIS_LAZULI -> 20;
+                case REDSTONE -> 21;
+                case AMETHYST_SHARD -> 22;
+                case QUARTZ -> 23;
+                case IRON_INGOT -> 24;
+                case COPPER_INGOT -> 29;
+                case GOLD_INGOT -> 30;
+                case DIAMOND -> 31;
+                case EMERALD -> 32;
+                case NETHERITE_INGOT -> 33;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeButcher(double multiplier) {
+        for (ShopEntry entry : category.entries()) {
+            int slot = switch (entry.material()) {
+                case PORKCHOP -> 20;
+                case COOKED_PORKCHOP -> 29;
+                case BEEF -> 21;
+                case COOKED_BEEF -> 30;
+                case CHICKEN -> 22;
+                case COOKED_CHICKEN -> 31;
+                case MUTTON -> 23;
+                case COOKED_MUTTON -> 32;
+                case RABBIT -> 24;
+                case COOKED_RABBIT -> 33;
+                default -> -1;
+            };
+            put(entry, slot, multiplier);
+        }
+    }
+
+    private void placeAuto(double multiplier) {
+        var slots = ShopSellLayout.slotsFor(category.entries());
+        for (ShopEntry entry : category.entries()) {
+            Integer slot = slots.get(entry.material());
+            if (slot != null) {
+                put(entry, slot, multiplier);
+            }
+        }
+    }
+
+    private void put(ShopEntry entry, int slot, double multiplier) {
+        if (slot < 0) {
+            plugin.getLogger().warning("Shop: нет слота для " + entry.material() + " в " + category.id());
+            return;
+        }
+        long unit = Math.max(1, Math.round(entry.basePrice() * multiplier));
+        SellAmountMode mode = shop.sellMode(viewer, entry.material());
+        int inInv = SellAmountMode.countInInventory(viewer, entry);
+        inventory.setItem(slot, sellIcon(entry, unit, inInv, mode, slot));
+    }
+
     private ItemStack headerItem(double multiplier, ClanCategoryProgress clanProgress, boolean clanFocusHere) {
         List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Сборка: " + LAYOUT_BUILD, NamedTextColor.DARK_GRAY, TextDecoration.BOLD));
         lore.add(Component.text("Множитель: x" + ShopLeveling.formatMultiplier(multiplier), NamedTextColor.GREEN, TextDecoration.BOLD));
         lore.add(Component.empty());
         if (clanProgress != null) {
@@ -119,7 +256,7 @@ public final class ShopSellMenu implements InventoryHolder {
                 lore.toArray(Component[]::new));
     }
 
-    private ItemStack sellIcon(ShopEntry entry, long unitPrice, int inInv, SellAmountMode mode) {
+    private ItemStack sellIcon(ShopEntry entry, long unitPrice, int inInv, SellAmountMode mode, int slotIndex) {
         ItemStack display = new ItemStack(entry.material());
         ItemMeta meta = display.getItemMeta();
         if (meta != null) {
@@ -138,6 +275,7 @@ public final class ShopSellMenu implements InventoryHolder {
                             .append(Component.text(inInv + " шт", NamedTextColor.AQUA)),
                     Component.text("Сдача: ", NamedTextColor.GRAY)
                             .append(Component.text(mode.label(), NamedTextColor.YELLOW, TextDecoration.BOLD)),
+                    Component.text("Слот GUI: " + slotIndex, NamedTextColor.DARK_GRAY),
                     Component.empty(),
                     Component.text("ЛКМ — продать", NamedTextColor.GREEN, TextDecoration.BOLD),
                     Component.text("ПКМ — сменить кол-во", NamedTextColor.GOLD)

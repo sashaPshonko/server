@@ -15,6 +15,7 @@ import dev.narek.pveauction.command.SpawnCommand;
 import dev.narek.pveauction.db.ClanRepository;
 import dev.narek.pveauction.db.ShopRepository;
 import dev.narek.pveauction.gui.shop.ShopGuiListener;
+import dev.narek.pveauction.gui.shop.ShopSellMenu;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.db.LotRepository;
 import dev.narek.pveauction.db.PlayerRepository;
@@ -130,6 +131,8 @@ public final class PveAuctionPlugin extends JavaPlugin {
         }
 
         registerCmd("shop", new ShopCommand());
+        getLogger().info("PveAuction v" + getDescription().getVersion()
+                + " — скупка, раскладка " + ShopSellMenu.LAYOUT_BUILD);
 
         getLogger().info("PveAuction: аукцион, кланы, магазин, /pay; лимит " + maxActiveLots() + " лотов.");
     }

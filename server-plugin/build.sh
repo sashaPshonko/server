@@ -33,12 +33,15 @@ if [[ ! -x ./gradlew ]]; then
 fi
 
 ./gradlew jar --no-daemon
-JAR="build/libs/PveAuction-0.1.0.jar"
-if [[ ! -f "${JAR}" ]]; then
-  JAR=$(ls -1 build/libs/PveAuction-*.jar 2>/dev/null | head -1)
+JAR=$(ls -1t build/libs/PveAuction-*.jar 2>/dev/null | head -1)
+if [[ -z "${JAR}" || ! -f "${JAR}" ]]; then
+  echo "JAR не найден в build/libs/"
+  exit 1
 fi
 
 mkdir -p ../plugins
+rm -f ../plugins/PveAuction-*.jar
 cp "${JAR}" ../plugins/
 echo "Скопировано: ../plugins/$(basename "${JAR}")"
+echo "MD5: $(md5 -q "${JAR}" 2>/dev/null || md5sum "${JAR}" | cut -d' ' -f1)"
 echo "Перезапусти сервер и в игре: /ah, /rtp, /spawn"
