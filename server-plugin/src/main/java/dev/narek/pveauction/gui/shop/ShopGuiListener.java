@@ -7,10 +7,13 @@ import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.Msg;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 
 import java.sql.SQLException;
 
@@ -24,45 +27,65 @@ public final class ShopGuiListener implements Listener {
         this.shop = shop;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
         Inventory top = event.getView().getTopInventory();
-        Object holder = top.getHolder();
+        InventoryHolder holder = top.getHolder();
+        if (holder == null) {
+            holder = top.getHolder(false);
+        }
         if (holder instanceof ShopMainMenu menu) {
-            handleMain(event, menu);
+            handleMain(event, player, menu);
         } else if (holder instanceof ShopCategoryMenu menu) {
-            handleCategories(event, menu);
+            handleCategories(event, player, menu);
         } else if (holder instanceof ShopSellMenu menu) {
-            handleSell(event, menu);
+            handleSell(event, player, menu);
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDrag(InventoryDragEvent event) {
         Object holder = event.getView().getTopInventory().getHolder();
-        if (holder instanceof ShopMainMenu || holder instanceof ShopCategoryMenu || holder instanceof ShopSellMenu) {
+        if (holder == null) {
+            holder = event.getView().getTopInventory().getHolder(false);
+        }
+        if (holder instanceof ShopMainMenu
+                || holder instanceof ShopCategoryMenu
+                || holder instanceof ShopSellMenu) {
             event.setCancelled(true);
         }
     }
 
-    private void handleMain(InventoryClickEvent event, ShopMainMenu menu) {
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
+    @EventHandler
+    public void onClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
             return;
         }
-        if (!player.getUniqueId().equals(menu.viewer().getUniqueId())) {
-            return;
-        }
-        if (event.getRawSlot() == ShopMainMenu.SLOT_SELL) {
-            runDb(player, () -> ShopCategoryMenu.open(plugin, shop, player));
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof ShopMainMenu || holder instanceof ShopCategoryMenu || holder instanceof ShopSellMenu) {
+            player.updateInventory();
         }
     }
 
-    private void handleCategories(InventoryClickEvent event, ShopCategoryMenu menu) {
+    private void handleMain(InventoryClickEvent event, Player player, ShopMainMenu menu) {
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
+        if (!player.getUniqueId().equals(menu.viewer().getUniqueId())) {
             return;
         }
+        int raw = event.getRawSlot();
+        if (raw >= menu.getInventory().getSize()) {
+            return;
+        }
+        if (raw == ShopMainMenu.SLOT_SELL) {
+            openCategories(player);
+        }
+    }
+
+    private void handleCategories(InventoryClickEvent event, Player player, ShopCategoryMenu menu) {
+        event.setCancelled(true);
         if (!player.getUniqueId().equals(menu.viewer().getUniqueId())) {
             return;
         }
@@ -73,7 +96,11 @@ public final class ShopGuiListener implements Listener {
 
         if (raw == ShopCategoryMenu.SLOT_MODE) {
             shop.cycleSellMode(player);
-            runDb(player, menu::reload);
+            try {
+                menu.reload();
+            } catch (SQLException e) {
+                dbError(player, e);
+            }
             return;
         }
 
@@ -88,36 +115,23 @@ public final class ShopGuiListener implements Listener {
         }
 
         if (event.isShiftClick()) {
-            runDb(player, () -> {
+            try {
                 shop.setClanFocus(player, cat);
-                runSync(() -> {
-                    Msg.clan(player, Msg.ok("Бонус клана на категорию «" + cat.displayName() + "»."));
-                    try {
-                        menu.reload();
-                    } catch (SQLException e) {
-                        dbError(player, e);
-                    }
-                });
-            });
+                Msg.clan(player, Msg.ok("Бонус клана: «" + cat.displayName() + "»"));
+                menu.reload();
+            } catch (SQLException e) {
+                dbError(player, e);
+            } catch (IllegalStateException e) {
+                Msg.server(player, Msg.err(e.getMessage()));
+            }
             return;
         }
 
-        runDb(player, () -> {
-            double mult = 1.0;
-            var member = plugin.clans().repo().findMember(player.getUniqueId());
-            if (member.isPresent()) {
-                mult = shop.clanMultiplier(member.get().clanId(), cat);
-            }
-            double finalMult = mult;
-            runSync(() -> ShopSellMenu.open(plugin, shop, player, cat, finalMult));
-        });
+        openSell(player, cat);
     }
 
-    private void handleSell(InventoryClickEvent event, ShopSellMenu menu) {
+    private void handleSell(InventoryClickEvent event, Player player, ShopSellMenu menu) {
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
         if (!player.getUniqueId().equals(menu.viewer().getUniqueId())) {
             return;
         }
@@ -133,7 +147,7 @@ public final class ShopGuiListener implements Listener {
         }
 
         if (raw == ShopSellMenu.SLOT_BACK) {
-            runDb(player, () -> ShopCategoryMenu.open(plugin, shop, player));
+            openCategories(player);
             return;
         }
 
@@ -143,50 +157,40 @@ public final class ShopGuiListener implements Listener {
         }
 
         ShopCategory cat = menu.category();
-        runDb(player, () -> {
+        try {
             ShopService.SellResult result = shop.sell(player, cat, entry.material(), entry.basePrice());
-            runSync(() -> {
-                result.send(player);
-                if (!result.success()) {
-                    return;
-                }
-                try {
-                    double mult = 1.0;
-                    var member = plugin.clans().repo().findMember(player.getUniqueId());
-                    if (member.isPresent()) {
-                        mult = shop.clanMultiplier(member.get().clanId(), cat);
-                    }
-                    ShopSellMenu.open(plugin, shop, player, cat, mult);
-                } catch (SQLException e) {
-                    dbError(player, e);
-                }
-            });
-        });
-    }
-
-    @FunctionalInterface
-    private interface DbTask {
-        void run() throws SQLException;
-    }
-
-    private void runDb(Player player, DbTask task) {
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                task.run();
-            } catch (SQLException e) {
-                dbError(player, e);
-            } catch (IllegalStateException e) {
-                runSync(() -> Msg.server(player, Msg.err(e.getMessage())));
+            result.send(player);
+            if (result.success()) {
+                openSell(player, cat);
             }
-        });
+        } catch (SQLException e) {
+            dbError(player, e);
+        }
     }
 
-    private void runSync(Runnable task) {
-        plugin.getServer().getScheduler().runTask(plugin, task);
+    private void openCategories(Player player) {
+        try {
+            ShopCategoryMenu.open(plugin, shop, player);
+        } catch (SQLException e) {
+            dbError(player, e);
+        }
+    }
+
+    private void openSell(Player player, ShopCategory category) {
+        try {
+            double mult = 1.0;
+            var member = plugin.clans().repo().findMember(player.getUniqueId());
+            if (member.isPresent()) {
+                mult = shop.clanMultiplier(member.get().clanId(), category);
+            }
+            ShopSellMenu.open(plugin, shop, player, category, mult);
+        } catch (SQLException e) {
+            dbError(player, e);
+        }
     }
 
     private void dbError(Player player, SQLException e) {
         plugin.getLogger().severe(e.getMessage());
-        runSync(() -> Msg.server(player, Msg.err("Ошибка базы данных.")));
+        Msg.server(player, Msg.err("Ошибка базы данных."));
     }
 }

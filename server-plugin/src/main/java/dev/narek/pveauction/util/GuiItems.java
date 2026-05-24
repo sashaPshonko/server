@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -22,13 +23,34 @@ public final class GuiItems {
             if (lore.length > 0) {
                 meta.lore(List.of(lore));
             }
+            decorateMeta(meta);
             item.setItemMeta(meta);
         }
         return item;
     }
 
     public static ItemStack glassFill() {
-        return button(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "));
+        return decorPane(Material.GRAY_STAINED_GLASS_PANE, " ");
+    }
+
+    public static ItemStack decorPane(Material mat, String name) {
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text(name));
+            decorateMeta(meta);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    public static void decorateMeta(ItemMeta meta) {
+        meta.addItemFlags(
+                ItemFlag.HIDE_ATTRIBUTES,
+                ItemFlag.HIDE_ADDITIONAL_TOOLTIP,
+                ItemFlag.HIDE_ENCHANTS,
+                ItemFlag.HIDE_UNBREAKABLE
+        );
     }
 
     public static String formatPrice(long price) {

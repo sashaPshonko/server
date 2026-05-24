@@ -13,8 +13,8 @@ import org.bukkit.inventory.InventoryHolder;
 
 public final class ShopMainMenu implements InventoryHolder {
 
-    public static final int SLOT_BUY = 20;
-    public static final int SLOT_SELL = 24;
+    public static final int SLOT_BUY = 11;
+    public static final int SLOT_SELL = 15;
 
     private final Player viewer;
     private Inventory inventory;
@@ -31,16 +31,16 @@ public final class ShopMainMenu implements InventoryHolder {
     }
 
     private void fill() {
-        var glass = GuiItems.glassFill();
-        for (int i = 0; i < 27; i++) {
-            inventory.setItem(i, glass);
-        }
+        ShopGuiLayout.fillChest27(inventory);
+        inventory.setItem(4, GuiItems.button(Material.NETHER_STAR,
+                Component.text("4NAREK", NamedTextColor.GOLD, TextDecoration.BOLD),
+                Component.text("Торговый центр", NamedTextColor.GRAY)));
         inventory.setItem(SLOT_BUY, GuiItems.button(Material.EMERALD,
                 Component.text("МАГАЗИН", NamedTextColor.GRAY, TextDecoration.BOLD),
                 Component.text("Скоро", NamedTextColor.DARK_GRAY)));
         inventory.setItem(SLOT_SELL, GuiItems.button(Material.GOLD_INGOT,
-                Component.text("СКУПКА РЕСУРСОВ", NamedTextColor.GREEN, TextDecoration.BOLD),
-                Component.text("ЛКМ — открыть", NamedTextColor.GRAY)));
+                Component.text("СКУПКА", NamedTextColor.GREEN, TextDecoration.BOLD),
+                Component.text("ЛКМ — открыть", NamedTextColor.YELLOW)));
     }
 
     public Player viewer() {

@@ -24,9 +24,9 @@ import java.util.Optional;
 
 public final class ShopCategoryMenu implements InventoryHolder {
 
-    public static final int SLOT_BACK = 45;
-    public static final int SLOT_MODE = 49;
-    private static final int[] CATEGORY_SLOTS = {10, 11, 12, 13, 14, 15};
+    public static final int SLOT_BACK = 49;
+    public static final int SLOT_MODE = 53;
+    private static final int[] CATEGORY_SLOTS = {20, 21, 22, 23, 24, 31};
 
     private final PveAuctionPlugin plugin;
     private final ShopService shop;
@@ -50,10 +50,7 @@ public final class ShopCategoryMenu implements InventoryHolder {
     private void fill() throws SQLException {
         inventory.clear();
         slotCategory.clear();
-        var glass = GuiItems.glassFill();
-        for (int i = 45; i < 54; i++) {
-            inventory.setItem(i, glass);
-        }
+        ShopGuiLayout.fillChest54(inventory);
 
         Integer clanId = plugin.clans().repo().findMember(viewer.getUniqueId())
                 .map(m -> m.clanId())
@@ -68,17 +65,28 @@ public final class ShopCategoryMenu implements InventoryHolder {
             inventory.setItem(slot, categoryIcon(cat, clanId, focus));
         }
 
+        inventory.setItem(4, GuiItems.button(Material.GOLD_INGOT,
+                Component.text("Скупка ресурсов", NamedTextColor.GOLD, TextDecoration.BOLD),
+                Component.text("Выбери категорию", NamedTextColor.GRAY)));
+
         inventory.setItem(SLOT_BACK, GuiItems.button(Material.ARROW,
-                Component.text("НАЗАД", NamedTextColor.GREEN, TextDecoration.BOLD)));
+                Component.text("НАЗАД", NamedTextColor.RED, TextDecoration.BOLD)));
         fillModeButton();
     }
 
     private void fillModeButton() {
         var mode = shop.sellMode(viewer);
+        var lines = new java.util.ArrayList<Component>();
+        lines.add(Component.text("[ЛКМ] сменить режим сдачи", NamedTextColor.GOLD));
+        lines.add(Component.empty());
+        for (var m : dev.narek.pveauction.shop.SellAmountMode.values()) {
+            NamedTextColor c = m == mode ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY;
+            String arrow = m == mode ? ">> " : "   ";
+            lines.add(Component.text(arrow + "Продать " + m.label(), c));
+        }
         inventory.setItem(SLOT_MODE, GuiItems.button(Material.HOPPER,
                 Component.text("Сдача: " + mode.label(), NamedTextColor.YELLOW, TextDecoration.BOLD),
-                Component.text("[ПКМ] сменить режим", NamedTextColor.GOLD),
-                Component.text(">> " + mode.label(), NamedTextColor.GREEN)));
+                lines.toArray(Component[]::new)));
     }
 
     private ItemStack categoryIcon(ShopCategory cat, Integer clanId, Optional<ShopCategory> focus) throws SQLException {
@@ -87,22 +95,22 @@ public final class ShopCategoryMenu implements InventoryHolder {
         if (clanId != null) {
             ClanCategoryProgress p = shop.categoryProgress(clanId, cat);
             double mult = ShopLeveling.multiplier(plugin, p.level());
-            lore.add(Component.text("★ Уровень: ", NamedTextColor.LIGHT_PURPLE)
-                    .append(Component.text(String.valueOf(p.level()), NamedTextColor.WHITE)));
-            lore.add(Component.text("Прогресс: ", NamedTextColor.GOLD)
+            lore.add(Component.text("Уровень: ", NamedTextColor.GRAY)
+                    .append(Component.text(String.valueOf(p.level()), NamedTextColor.LIGHT_PURPLE)));
+            lore.add(Component.text("Прогресс: ", NamedTextColor.GRAY)
                     .append(Component.text(ShopLeveling.progressText(plugin, p.level(), p.earnedCoins()), NamedTextColor.WHITE)));
-            lore.add(Component.text("Множитель: ", NamedTextColor.GREEN)
-                    .append(Component.text("x" + String.format("%.2f", mult), NamedTextColor.WHITE)));
+            lore.add(Component.text("Множитель: ", NamedTextColor.GRAY)
+                    .append(Component.text("x" + String.format("%.2f", mult), NamedTextColor.GREEN)));
             if (focus.isPresent() && focus.get() == cat) {
-                lore.add(Component.text("✦ Бонус клана активен", NamedTextColor.AQUA, TextDecoration.BOLD));
-            } else if (focus.isEmpty()) {
-                lore.add(Component.text("Владелец: Shift+ЛКМ — бонус клана", NamedTextColor.GRAY));
+                lore.add(Component.text("✦ Бонус клана здесь", NamedTextColor.AQUA, TextDecoration.BOLD));
+            } else {
+                lore.add(Component.text("Владелец: Shift+ЛКМ — бонус", NamedTextColor.DARK_GRAY));
             }
         } else {
-            lore.add(Component.text("В клане — прокачка категорий", NamedTextColor.GRAY));
+            lore.add(Component.text("Вступи в клан для прокачки", NamedTextColor.DARK_GRAY));
         }
         lore.add(Component.empty());
-        lore.add(Component.text("ЛКМ — открыть", NamedTextColor.GREEN));
+        lore.add(Component.text("ЛКМ — открыть", NamedTextColor.GREEN, TextDecoration.BOLD));
         return GuiItems.button(cat.icon(),
                 Component.text(cat.displayName(), NamedTextColor.WHITE, TextDecoration.BOLD),
                 lore.toArray(Component[]::new));
@@ -114,10 +122,6 @@ public final class ShopCategoryMenu implements InventoryHolder {
 
     public Player viewer() {
         return viewer;
-    }
-
-    public void refreshMode() {
-        fillModeButton();
     }
 
     public void reload() throws SQLException {
