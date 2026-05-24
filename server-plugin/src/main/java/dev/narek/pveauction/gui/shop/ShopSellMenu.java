@@ -7,7 +7,7 @@ import dev.narek.pveauction.shop.ShopCatalog;
 import dev.narek.pveauction.shop.ShopCategory;
 import dev.narek.pveauction.shop.ShopEntry;
 import dev.narek.pveauction.shop.ShopLeveling;
-import dev.narek.pveauction.shop.ShopSellLayout;
+import dev.narek.pveauction.shop.ShopSellSlots;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.GuiText;
@@ -74,7 +74,7 @@ public final class ShopSellMenu implements InventoryHolder {
         inventory.setItem(SLOT_INFO, headerItem(multiplier, clanProgress, clanFocusHere));
 
         List<ShopEntry> entries = category.entries();
-        Map<Material, Integer> slots = ShopSellLayout.slotsFor(entries);
+        Map<Material, Integer> slots = ShopSellSlots.forCategory(category, entries);
         for (ShopEntry entry : entries) {
             Integer slot = slots.get(entry.material());
             if (slot == null) {
