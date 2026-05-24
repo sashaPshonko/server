@@ -58,37 +58,36 @@ public final class ShopSellSlots {
      */
     private static Map<Material, Integer> fisher() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.COD, 20);
-        s.put(Material.COOKED_COD, 29);
-        s.put(Material.SALMON, 21);
-        s.put(Material.COOKED_SALMON, 30);
-        s.put(Material.TROPICAL_FISH, 22);
-        s.put(Material.PUFFERFISH, 23);
-        s.put(Material.NAUTILUS_SHELL, 24);
-        s.put(Material.LILY_PAD, 25);
-        s.put(Material.BOWL, 26);
-        s.put(Material.LEATHER, 31);
-        s.put(Material.STRING, 32);
-        s.put(Material.INK_SAC, 33);
-        s.put(Material.SADDLE, 34);
-        s.put(Material.NAME_TAG, 35);
+        s.put(Material.COD, 19);
+        s.put(Material.COOKED_COD, 28);
+        s.put(Material.SALMON, 20);
+        s.put(Material.COOKED_SALMON, 29);
+        s.put(Material.TROPICAL_FISH, 21);
+        s.put(Material.PUFFERFISH, 22);
+        s.put(Material.NAUTILUS_SHELL, 23);
+        s.put(Material.LILY_PAD, 24);
+        s.put(Material.LEATHER, 30);
+        s.put(Material.INK_SAC, 31);
+        s.put(Material.SADDLE, 32);
+        s.put(Material.NAME_TAG, 33);
         return s;
     }
 
-    /** 11: паучий глаз сверху по центру (13), под ним 5 + 5. */
+    /** 12: 6 + 6 по центру. */
     private static Map<Material, Integer> loot() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.SPIDER_EYE, 13);
-        s.put(Material.ROTTEN_FLESH, 20);
-        s.put(Material.BONE, 21);
-        s.put(Material.BLAZE_ROD, 22);
-        s.put(Material.BREEZE_ROD, 23);
-        s.put(Material.SLIME_BALL, 24);
-        s.put(Material.MAGMA_CREAM, 29);
-        s.put(Material.GUNPOWDER, 30);
-        s.put(Material.ENDER_PEARL, 31);
-        s.put(Material.PRISMARINE_SHARD, 32);
-        s.put(Material.SHULKER_SHELL, 33);
+        s.put(Material.SPIDER_EYE, 20);
+        s.put(Material.ROTTEN_FLESH, 21);
+        s.put(Material.BONE, 22);
+        s.put(Material.STRING, 23);
+        s.put(Material.BLAZE_ROD, 24);
+        s.put(Material.BREEZE_ROD, 25);
+        s.put(Material.SLIME_BALL, 30);
+        s.put(Material.MAGMA_CREAM, 31);
+        s.put(Material.GUNPOWDER, 32);
+        s.put(Material.ENDER_PEARL, 33);
+        s.put(Material.PRISMARINE_SHARD, 34);
+        s.put(Material.SHULKER_SHELL, 35);
         return s;
     }
 

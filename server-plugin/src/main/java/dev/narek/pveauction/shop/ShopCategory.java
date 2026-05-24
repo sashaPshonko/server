@@ -58,6 +58,7 @@ public enum ShopCategory {
             entry(Material.SLIME_BALL, 10),
             entry(Material.MAGMA_CREAM, 12),
             entry(Material.GUNPOWDER, 8),
+            entry(Material.STRING, 3),
             entry(Material.ENDER_PEARL, 18),
             entry(Material.PRISMARINE_SHARD, 7),
             entry(Material.SHULKER_SHELL, 120)
@@ -71,9 +72,7 @@ public enum ShopCategory {
             entry(Material.PUFFERFISH, 6),
             entry(Material.NAUTILUS_SHELL, 45),
             entry(Material.LILY_PAD, 3),
-            entry(Material.BOWL, 1),
             entry(Material.LEATHER, 4),
-            entry(Material.STRING, 3),
             entry(Material.INK_SAC, 4),
             entry(Material.SADDLE, 55),
             entry(Material.NAME_TAG, 80)
