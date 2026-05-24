@@ -57,19 +57,9 @@ public final class ShopSellLayout {
     }
 
     private static void layoutSinglesOnly(List<Material> singles, Map<Material, Integer> slots) {
-        int count = singles.size();
-        int rows = rowsForCount(count);
-        int cols = (count + rows - 1) / rows;
-        cols = Math.min(cols, WIDTH);
-
+        int rows = rowsForCount(singles.size());
         int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - rows) / 2;
-        int colOffset = (WIDTH - cols) / 2;
-
-        for (int i = 0; i < count; i++) {
-            int r = i / cols;
-            int c = i % cols;
-            slots.put(singles.get(i), (firstRow + r) * WIDTH + colOffset + c);
-        }
+        placeSinglesGrid(singles, firstRow, rows, 0, WIDTH, slots);
     }
 
     private static void layoutMixed(List<Placement> pairs, List<Material> singles, Map<Material, Integer> slots) {
@@ -82,15 +72,33 @@ public final class ShopSellLayout {
             slots.put(p.cooked(), (firstRow + 1) * WIDTH + c);
         }
 
-        int singleArea = WIDTH - pairCols;
-        int singleRows = 2;
-        int cols = Math.min(singleArea, (singles.size() + singleRows - 1) / singleRows);
-        int colStart = pairCols + (singleArea - cols) / 2;
+        placeSinglesGrid(singles, firstRow, 2, pairCols, WIDTH - pairCols, slots);
+    }
 
-        for (int i = 0; i < singles.size(); i++) {
-            int r = i / cols;
-            int c = i % cols;
-            slots.put(singles.get(i), (firstRow + r) * WIDTH + colStart + c);
+    /**
+     * Лишние предметы — в верхние ряды; каждый ряд по центру своей зоны.
+     */
+    private static void placeSinglesGrid(
+            List<Material> singles,
+            int firstRow,
+            int rows,
+            int areaStartCol,
+            int areaWidth,
+            Map<Material, Integer> slots
+    ) {
+        int count = singles.size();
+        if (count == 0) {
+            return;
+        }
+        int base = count / rows;
+        int extra = count % rows;
+        int index = 0;
+        for (int r = 0; r < rows; r++) {
+            int inRow = base + (r < extra ? 1 : 0);
+            int colOffset = areaStartCol + Math.max(0, (areaWidth - inRow) / 2);
+            for (int c = 0; c < inRow; c++) {
+                slots.put(singles.get(index++), (firstRow + r) * WIDTH + colOffset + c);
+            }
         }
     }
 
