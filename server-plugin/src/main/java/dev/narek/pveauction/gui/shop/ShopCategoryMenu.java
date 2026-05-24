@@ -79,16 +79,21 @@ public final class ShopCategoryMenu implements InventoryHolder {
         if (clanId != null) {
             ClanCategoryProgress p = shop.categoryProgress(clanId, cat);
             double mult = ShopLeveling.multiplier(plugin, p.level());
+            if (focus.isPresent() && focus.get() == cat) {
+                mult *= 1.1;
+            }
             lore.add(Component.text("Уровень: ", NamedTextColor.GRAY)
                     .append(Component.text(String.valueOf(p.level()), NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD)));
             lore.add(ShopLeveling.progressBar(plugin, p.level(), p.earnedCoins()));
             lore.add(ShopLeveling.progressLoreLine(plugin, p.level(), p.earnedCoins()));
             lore.add(Component.text("Множитель: ", NamedTextColor.GRAY)
-                    .append(Component.text("x" + String.format("%.2f", mult), NamedTextColor.GREEN)));
+                    .append(Component.text("x" + ShopLeveling.formatMultiplier(mult), NamedTextColor.GREEN, TextDecoration.BOLD)));
+            lore.add(Component.text("След. ур.: x" + ShopLeveling.formatMultiplier(ShopLeveling.multiplier(plugin, p.level() + 1)),
+                    NamedTextColor.YELLOW));
             if (focus.isPresent() && focus.get() == cat) {
-                lore.add(Component.text("✦ Бонус клана здесь", NamedTextColor.AQUA, TextDecoration.BOLD));
+                lore.add(Component.text("✦ Бонус клана +10%", NamedTextColor.AQUA, TextDecoration.BOLD));
             } else {
-                lore.add(Component.text("Владелец: Shift+ЛКМ — бонус", NamedTextColor.DARK_GRAY));
+                lore.add(Component.text("Владелец: Shift+ЛКМ — +10%", NamedTextColor.DARK_GRAY));
             }
         } else {
             lore.add(Component.text("Вступи в клан для прокачки", NamedTextColor.DARK_GRAY));

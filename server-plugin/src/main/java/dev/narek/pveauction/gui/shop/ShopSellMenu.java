@@ -21,6 +21,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,41 +35,17 @@ public final class ShopSellMenu implements InventoryHolder {
     private final ShopService shop;
     private final Player viewer;
     private final ShopCategory category;
-    private final double multiplier;
-    private final ClanCategoryProgress clanProgress;
-    private final boolean clanFocusHere;
     private Inventory inventory;
 
-    private ShopSellMenu(
-            PveAuctionPlugin plugin,
-            ShopService shop,
-            Player viewer,
-            ShopCategory category,
-            double multiplier,
-            ClanCategoryProgress clanProgress,
-            boolean clanFocusHere
-    ) {
+    private ShopSellMenu(PveAuctionPlugin plugin, ShopService shop, Player viewer, ShopCategory category) {
         this.plugin = plugin;
         this.shop = shop;
         this.viewer = viewer;
         this.category = category;
-        this.multiplier = multiplier;
-        this.clanProgress = clanProgress;
-        this.clanFocusHere = clanFocusHere;
     }
 
-    public static void open(
-            PveAuctionPlugin plugin,
-            ShopService shop,
-            Player player,
-            ShopCategory category,
-            double mult,
-            ClanCategoryProgress clanProgress,
-            boolean clanFocusHere
-    ) {
-        ShopSellMenu menu = new ShopSellMenu(
-                plugin, shop, player, category, mult, clanProgress, clanFocusHere
-        );
+    public static void open(PveAuctionPlugin plugin, ShopService shop, Player player, ShopCategory category) {
+        ShopSellMenu menu = new ShopSellMenu(plugin, shop, player, category);
         menu.inventory = Bukkit.createInventory(menu, 54,
                 GuiText.title("Скупка: " + category.displayName(), NamedTextColor.GREEN));
         menu.fill();
@@ -78,7 +55,22 @@ public final class ShopSellMenu implements InventoryHolder {
     private void fill() {
         inventory.clear();
         ShopGuiLayout.fillChest54(inventory);
-        inventory.setItem(SLOT_INFO, headerItem());
+
+        double multiplier = 1.0;
+        ClanCategoryProgress clanProgress = null;
+        boolean clanFocusHere = false;
+        try {
+            var member = plugin.clans().repo().findMember(viewer.getUniqueId());
+            if (member.isPresent()) {
+                int clanId = member.get().clanId();
+                multiplier = shop.effectiveMultiplier(clanId, category);
+                clanProgress = shop.categoryProgress(clanId, category);
+                clanFocusHere = shop.focusCategory(clanId).map(c -> c == category).orElse(false);
+            }
+        } catch (SQLException ignored) {
+        }
+
+        inventory.setItem(SLOT_INFO, headerItem(multiplier, clanProgress, clanFocusHere));
 
         Map<Material, Integer> slots = ShopSellLayout.slotsFor(category.entries());
         for (ShopEntry entry : category.entries()) {
@@ -96,28 +88,30 @@ public final class ShopSellMenu implements InventoryHolder {
                 Component.text("НАЗАД", NamedTextColor.RED, TextDecoration.BOLD)));
     }
 
-    private ItemStack headerItem() {
+    private ItemStack headerItem(double multiplier, ClanCategoryProgress clanProgress, boolean clanFocusHere) {
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Множитель: x" + String.format("%.2f", multiplier), NamedTextColor.GREEN));
+        lore.add(Component.text("Множитель: x" + ShopLeveling.formatMultiplier(multiplier), NamedTextColor.GREEN, TextDecoration.BOLD));
         lore.add(Component.empty());
         if (clanProgress != null) {
             int level = clanProgress.level();
             long earned = clanProgress.earnedCoins();
-            lore.add(Component.text("Уровень клана: ", NamedTextColor.GRAY)
+            double nextMult = ShopLeveling.multiplier(plugin, level + 1);
+            lore.add(Component.text("Уровень: ", NamedTextColor.GRAY)
                     .append(Component.text(String.valueOf(level), NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD)));
             lore.add(ShopLeveling.progressBar(plugin, level, earned));
             lore.add(ShopLeveling.progressLoreLine(plugin, level, earned));
+            lore.add(Component.text("След. множитель: x" + ShopLeveling.formatMultiplier(nextMult), NamedTextColor.YELLOW));
             if (clanFocusHere) {
-                lore.add(Component.text("✦ Бонус клана активен", NamedTextColor.AQUA, TextDecoration.BOLD));
+                lore.add(Component.text("✦ Бонус клана +10%", NamedTextColor.AQUA, TextDecoration.BOLD));
             } else {
-                lore.add(Component.text("Бонус на другой категории", NamedTextColor.DARK_GRAY));
+                lore.add(Component.text("Владелец: Shift+ЛКМ в категориях — +10%", NamedTextColor.DARK_GRAY));
             }
         } else {
             lore.add(Component.text("Вступи в клан для прокачки", NamedTextColor.DARK_GRAY));
         }
         lore.add(Component.empty());
-        lore.add(Component.text("Сырое — сверху, жареное — снизу", NamedTextColor.GRAY));
-        return GuiItems.button(category.icon(),
+        lore.add(Component.text("Сырое сверху · жареное снизу", NamedTextColor.GRAY));
+        return GuiItems.button(Material.BOOK,
                 Component.text(category.displayName(), NamedTextColor.GOLD, TextDecoration.BOLD),
                 lore.toArray(Component[]::new));
     }

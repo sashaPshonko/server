@@ -50,13 +50,23 @@ public final class ShopService {
         return next;
     }
 
+    /** Множитель по уровню прокачки этой категории (сдаёшь мясника — растёт мясник). */
     public double clanMultiplier(int clanId, ShopCategory category) throws SQLException {
-        Optional<String> focus = shopDb.findFocusCategory(clanId);
-        if (focus.isEmpty() || !focus.get().equals(category.id())) {
-            return 1.0;
-        }
         ClanCategoryProgress progress = shopDb.getProgress(clanId, category);
         return ShopLeveling.multiplier(plugin, progress.level());
+    }
+
+    /** Доп. множитель, если владелец выбрал эту категорию бонусом клана (+10% к базовому). */
+    public double focusBonusMultiplier(int clanId, ShopCategory category) throws SQLException {
+        Optional<String> focus = shopDb.findFocusCategory(clanId);
+        if (focus.isPresent() && focus.get().equals(category.id())) {
+            return 1.1;
+        }
+        return 1.0;
+    }
+
+    public double effectiveMultiplier(int clanId, ShopCategory category) throws SQLException {
+        return clanMultiplier(clanId, category) * focusBonusMultiplier(clanId, category);
     }
 
     public ClanCategoryProgress categoryProgress(int clanId, ShopCategory category) throws SQLException {
@@ -83,7 +93,7 @@ public final class ShopService {
         Optional<ClanMember> member = plugin.clans().repo().findMember(player.getUniqueId());
         if (member.isPresent()) {
             clanId = member.get().clanId();
-            mult = clanMultiplier(clanId, category);
+            mult = effectiveMultiplier(clanId, category);
         }
 
         long unitPrice = Math.max(1, Math.round(basePrice * mult));
@@ -112,9 +122,14 @@ public final class ShopService {
     }
 
     private void notifyClanLevelUp(int clanId, ShopCategory category, int level) {
-        double mult = ShopLeveling.multiplier(plugin, level);
+        double mult;
+        try {
+            mult = effectiveMultiplier(clanId, category);
+        } catch (SQLException e) {
+            mult = ShopLeveling.multiplier(plugin, level);
+        }
         Component body = Msg.ok("Категория «" + category.displayName() + "» — уровень " + level
-                + " (x" + String.format("%.2f", mult) + ")");
+                + " (x" + ShopLeveling.formatMultiplier(mult) + ")");
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             try {
                 for (var m : plugin.clans().repo().listMembers(clanId)) {

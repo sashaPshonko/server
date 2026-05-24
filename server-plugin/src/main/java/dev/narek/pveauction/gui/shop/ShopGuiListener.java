@@ -1,7 +1,6 @@
 package dev.narek.pveauction.gui.shop;
 
 import dev.narek.pveauction.PveAuctionPlugin;
-import dev.narek.pveauction.shop.ClanCategoryProgress;
 import dev.narek.pveauction.shop.ShopCategory;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.Msg;
@@ -192,21 +191,7 @@ public final class ShopGuiListener implements Listener {
     }
 
     private void openSell(Player player, ShopCategory category) {
-        try {
-            double mult = 1.0;
-            ClanCategoryProgress progress = null;
-            boolean focusHere = false;
-            var member = plugin.clans().repo().findMember(player.getUniqueId());
-            if (member.isPresent()) {
-                int clanId = member.get().clanId();
-                mult = shop.clanMultiplier(clanId, category);
-                progress = shop.categoryProgress(clanId, category);
-                focusHere = shop.focusCategory(clanId).map(c -> c == category).orElse(false);
-            }
-            ShopSellMenu.open(plugin, shop, player, category, mult, progress, focusHere);
-        } catch (SQLException e) {
-            dbError(player, e);
-        }
+        ShopSellMenu.open(plugin, shop, player, category);
     }
 
     private void runNext(Runnable task) {

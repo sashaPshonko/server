@@ -83,4 +83,8 @@ public final class ShopLeveling {
         return Component.text("До ур. " + (level + 1) + ": ", NamedTextColor.GRAY)
                 .append(Component.text(progressText(plugin, level, earnedCoins), NamedTextColor.WHITE));
     }
+
+    public static String formatMultiplier(double mult) {
+        return String.format("%.2f", mult);
+    }
 }
