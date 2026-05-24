@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Мясник: сырое над жареным. Остальное — {@link ShopGuiGridLayout}.
+ * Мясник: сырое над жареным. Фермер/еда/лут — {@link ShopGuiGridLayout}. Рыбак: пары слева + сетка справа.
  */
 public final class ShopSellLayout {
 
@@ -34,11 +34,23 @@ public final class ShopSellLayout {
         if (!pairs.isEmpty() && singles.isEmpty()) {
             layoutPairsOnly(pairs, slots);
         } else if (pairs.isEmpty()) {
-            layoutSinglesOnly(singles, slots);
+            layoutSinglesInEntryOrder(entries, slots);
         } else {
             layoutMixed(pairs, singles, slots);
         }
         return slots;
+    }
+
+    /** Порядок слотов = порядок в категории (важно для дерева и лора). */
+    private static void layoutSinglesInEntryOrder(List<ShopEntry> entries, Map<Material, Integer> slots) {
+        int[] grid = ShopGuiGridLayout.slotsForCount(entries.size());
+        int i = 0;
+        for (ShopEntry entry : entries) {
+            if (i >= grid.length) {
+                break;
+            }
+            slots.put(entry.material(), grid[i++]);
+        }
     }
 
     private static void layoutPairsOnly(List<Placement> pairs, Map<Material, Integer> slots) {
@@ -52,13 +64,6 @@ public final class ShopSellLayout {
             int bottom = (firstRow + 1) * WIDTH + colOffset + c;
             slots.put(p.raw(), top);
             slots.put(p.cooked(), bottom);
-        }
-    }
-
-    private static void layoutSinglesOnly(List<Material> singles, Map<Material, Integer> slots) {
-        int[] grid = ShopGuiGridLayout.slotsForCount(singles.size());
-        for (int i = 0; i < singles.size(); i++) {
-            slots.put(singles.get(i), grid[i]);
         }
     }
 
@@ -114,7 +119,7 @@ public final class ShopSellLayout {
             return false;
         }
         for (ShopEntry e : entries) {
-            if (e.material() == material) {
+            if (e.accepts(material)) {
                 return true;
             }
         }

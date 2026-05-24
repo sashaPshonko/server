@@ -1,7 +1,8 @@
 package dev.narek.pveauction.gui.shop;
 
 /**
- * ≤5 — один ряд; 6+ чётное — два ряда; 6+ нечётное — 1 сверху + два рява снизу.
+ * Симметрия в меню сдачи (как у мясника по вертикали):
+ * ≤5 — один ряд; 6+ чётное — два ряда поровну; 6+ нечётное — 1 сверху по центру + два ряда 50/50.
  */
 public final class ShopGuiGridLayout {
 
@@ -48,10 +49,10 @@ public final class ShopGuiGridLayout {
 
     private static int[] oneRow(int count, int areaStart, int areaWidth, int rowStart, int rowsUsed) {
         int[] slots = new int[count];
-        int firstRow = rowStart + Math.max(0, (rowsUsed - 1) / 2);
+        int row = rowStart + Math.max(0, (rowsUsed - 1) / 2);
         int colOffset = areaStart + Math.max(0, (areaWidth - count) / 2);
         for (int i = 0; i < count; i++) {
-            slots[i] = firstRow * WIDTH + colOffset + i;
+            slots[i] = row * WIDTH + colOffset + i;
         }
         return slots;
     }
@@ -72,8 +73,7 @@ public final class ShopGuiGridLayout {
 
     private static int[] oddLayout(int count, int areaStart, int areaWidth, int rowStart, int rowsUsed) {
         int[] slots = new int[count];
-        int rest = count - 1;
-        int perRow = rest / 2;
+        int perRow = (count - 1) / 2;
         int firstRow = rowStart + Math.max(0, (rowsUsed - 3) / 2);
 
         int topCol = areaStart + (areaWidth - 1) / 2;

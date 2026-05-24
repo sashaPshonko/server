@@ -73,10 +73,12 @@ public final class ShopSellMenu implements InventoryHolder {
 
         inventory.setItem(SLOT_INFO, headerItem(multiplier, clanProgress, clanFocusHere));
 
-        Map<Material, Integer> slots = ShopSellLayout.slotsFor(category.entries());
-        for (ShopEntry entry : category.entries()) {
+        List<ShopEntry> entries = category.entries();
+        Map<Material, Integer> slots = ShopSellLayout.slotsFor(entries);
+        for (ShopEntry entry : entries) {
             Integer slot = slots.get(entry.material());
             if (slot == null) {
+                plugin.getLogger().warning("Shop: нет слота для " + entry.material() + " в " + category.id());
                 continue;
             }
             long unit = Math.max(1, Math.round(entry.basePrice() * multiplier));
