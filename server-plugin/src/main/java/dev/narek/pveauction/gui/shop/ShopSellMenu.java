@@ -29,7 +29,7 @@ import java.util.List;
 public final class ShopSellMenu implements InventoryHolder {
 
     /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
-    public static final String LAYOUT_BUILD = "0.1.2";
+    public static final String LAYOUT_BUILD = "0.1.3";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -95,12 +95,12 @@ public final class ShopSellMenu implements InventoryHolder {
     private void placeFarmer(double multiplier) {
         for (ShopEntry entry : category.entries()) {
             int slot = switch (entry.material()) {
-                case COCOA_BEANS -> 20;
-                case NETHER_WART -> 21;
-                case CHORUS_FRUIT -> 22;
-                case SUGAR_CANE -> 29;
-                case CACTUS -> 30;
-                case OAK_LOG -> 31;
+                case COCOA_BEANS -> 21;
+                case NETHER_WART -> 22;
+                case CHORUS_FRUIT -> 23;
+                case SUGAR_CANE -> 30;
+                case CACTUS -> 31;
+                case OAK_LOG -> 32;
                 default -> -1;
             };
             put(entry, slot, multiplier);
@@ -127,20 +127,20 @@ public final class ShopSellMenu implements InventoryHolder {
     private void placeFisher(double multiplier) {
         for (ShopEntry entry : category.entries()) {
             int slot = switch (entry.material()) {
-                case COD -> 18;
-                case COOKED_COD -> 27;
-                case SALMON -> 19;
-                case COOKED_SALMON -> 28;
-                case TROPICAL_FISH -> 21;
-                case PUFFERFISH -> 22;
-                case NAUTILUS_SHELL -> 23;
-                case LILY_PAD -> 24;
-                case BOWL -> 25;
-                case LEATHER -> 30;
-                case STRING -> 31;
-                case INK_SAC -> 32;
-                case SADDLE -> 33;
-                case NAME_TAG -> 34;
+                case COD -> 20;
+                case COOKED_COD -> 29;
+                case SALMON -> 21;
+                case COOKED_SALMON -> 30;
+                case TROPICAL_FISH -> 22;
+                case PUFFERFISH -> 23;
+                case NAUTILUS_SHELL -> 24;
+                case LILY_PAD -> 25;
+                case BOWL -> 26;
+                case LEATHER -> 31;
+                case STRING -> 32;
+                case INK_SAC -> 33;
+                case SADDLE -> 34;
+                case NAME_TAG -> 35;
                 default -> -1;
             };
             put(entry, slot, multiplier);

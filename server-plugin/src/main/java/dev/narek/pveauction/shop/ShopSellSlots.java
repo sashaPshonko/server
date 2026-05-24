@@ -29,12 +29,12 @@ public final class ShopSellSlots {
     /** 6 предметов: 3 + 3 по центру (ряды 2–3, колонки 3–5). */
     private static Map<Material, Integer> farmer() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.COCOA_BEANS, 20);
-        s.put(Material.NETHER_WART, 21);
-        s.put(Material.CHORUS_FRUIT, 22);
-        s.put(Material.SUGAR_CANE, 29);
-        s.put(Material.CACTUS, 30);
-        s.put(Material.OAK_LOG, 31);
+        s.put(Material.COCOA_BEANS, 21);
+        s.put(Material.NETHER_WART, 22);
+        s.put(Material.CHORUS_FRUIT, 23);
+        s.put(Material.SUGAR_CANE, 30);
+        s.put(Material.CACTUS, 31);
+        s.put(Material.OAK_LOG, 32);
         return s;
     }
 
@@ -54,24 +54,24 @@ public final class ShopSellSlots {
 
     /**
      * Слева треска/лосось (сырое/жареное), справа остальное 5 + 5.
-     * Пары: колонки 0–1; одиночные: колонки 3–7.
+     * Пары: колонки 2–3; одиночные: колонки 4–8.
      */
     private static Map<Material, Integer> fisher() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.COD, 18);
-        s.put(Material.COOKED_COD, 27);
-        s.put(Material.SALMON, 19);
-        s.put(Material.COOKED_SALMON, 28);
-        s.put(Material.TROPICAL_FISH, 21);
-        s.put(Material.PUFFERFISH, 22);
-        s.put(Material.NAUTILUS_SHELL, 23);
-        s.put(Material.LILY_PAD, 24);
-        s.put(Material.BOWL, 25);
-        s.put(Material.LEATHER, 30);
-        s.put(Material.STRING, 31);
-        s.put(Material.INK_SAC, 32);
-        s.put(Material.SADDLE, 33);
-        s.put(Material.NAME_TAG, 34);
+        s.put(Material.COD, 20);
+        s.put(Material.COOKED_COD, 29);
+        s.put(Material.SALMON, 21);
+        s.put(Material.COOKED_SALMON, 30);
+        s.put(Material.TROPICAL_FISH, 22);
+        s.put(Material.PUFFERFISH, 23);
+        s.put(Material.NAUTILUS_SHELL, 24);
+        s.put(Material.LILY_PAD, 25);
+        s.put(Material.BOWL, 26);
+        s.put(Material.LEATHER, 31);
+        s.put(Material.STRING, 32);
+        s.put(Material.INK_SAC, 33);
+        s.put(Material.SADDLE, 34);
+        s.put(Material.NAME_TAG, 35);
         return s;
     }
 

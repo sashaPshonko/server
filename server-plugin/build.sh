@@ -32,7 +32,7 @@ if [[ ! -x ./gradlew ]]; then
   exit 1
 fi
 
-./gradlew jar --no-daemon
+./gradlew clean jar --no-daemon
 JAR=$(ls -1t build/libs/PveAuction-*.jar 2>/dev/null | head -1)
 if [[ -z "${JAR}" || ! -f "${JAR}" ]]; then
   echo "JAR не найден в build/libs/"
@@ -47,4 +47,4 @@ echo "MD5: $(md5 -q "${JAR}" 2>/dev/null || md5sum "${JAR}" | cut -d' ' -f1)"
 echo ""
 echo "Локальный Paper: cd ../.. && ./start.sh  (или перезапуск уже запущенного сервера)"
 echo "Удалённый VPS:   ./deploy-remote.sh root@IP   (не боты 4narek-1.12)"
-echo "В игре проверка: /shop → чат «сборка 0.1.2», заголовок «Скупка [0.1.2]»"
+echo "В игре проверка: /shop → чат «сборка 0.1.3», заголовок «Скупка [0.1.3]»"

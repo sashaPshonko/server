@@ -1,48 +1,73 @@
-# Деплой PveAuction на VPS 159.194.200.114
+# Деплой на VPS 159.194.200.114
 
-## 1. С Mac
+## Проблема из лога
 
-```bash
-cd server/server-plugin
-./deploy-remote.sh
+```
+PveAuction (0.1.0)
+раскладка 0.1.1
 ```
 
-Введи пароль SSH когда спросит.
+На сервере **старый JAR**. Нужен **PveAuction-0.1.2.jar** и удаление `PveAuction-0.1.0.jar`.
 
-## 2. На VPS — перезапуск (обязательно)
+`stop` — только **в консоли Minecraft** (screen), не в обычном bash.
+
+---
+
+## 1. С Mac — залить JAR
+
+```bash
+cd /Users/sasha_pshonko/Documents/4narek/server/server-plugin
+./build.sh
+
+scp build/libs/PveAuction-0.1.2.jar root@159.194.200.114:/root/server/plugins/
+```
+
+## 2. На VPS — удалить старое
 
 ```bash
 ssh root@159.194.200.114
-cd /root/server
 
-# в консоли Minecraft (screen -r или tmux):
+cd /root/server/plugins
+rm -f PveAuction-0.1.0.jar PveAuction-0.1.1.jar
+rm -rf .paper-remapped
+ls -la PveAuction*.jar
+# должен остаться только PveAuction-0.1.2.jar (свежая дата)
+```
+
+## 3. Перезапуск сервера
+
+**Вариант A** — сервер в screen:
+
+```bash
+screen -ls
+screen -r   # или screen -r minecraft
 stop
+# дождись "Saving worlds" / выключения
+./start.sh
+# Ctrl+A D — отсоединиться
+```
 
-# подожди выключения, затем:
+**Вариант B** — просто убить процесс:
+
+```bash
+pkill -f paper.jar
+sleep 5
+cd /root/server
 ./start.sh
 ```
 
-**Не используй `/reload`** — Paper может оставить старый плагин.
+## 4. Проверка в логе
 
-## 3. Проверка в игре
+Должно быть:
 
-1. Подключись к **159.194.200.114** (не к локальному 192.168.x.x).
-2. `/shop` — в чате: **«PveAuction скупка, сборка 0.1.2»**.
-3. Фермер — заголовок окна: **«Скупка [0.1.2]: Фермер»**.
-4. Какао в **центре** (слот 20), не в одну длинную линию.
-
-Если в чате нет «0.1.2» — на сервере **старый JAR** или **не PveAuction** (другой плагин перехватывает `/shop`).
-
-## 4. Если всё ещё старое
-
-На VPS:
-
-```bash
-cd /root/server/plugins
-rm -rf .paper-remapped
-ls -la PveAuction*.jar
-# должен быть только PveAuction-0.1.2.jar (свежая дата)
-grep -i pveauction logs/latest.log | tail -20
+```
+[PveAuction] Loading server plugin PveAuction v0.1.2
+[PveAuction] PveAuction v0.1.2 — скупка, раскладка 0.1.2
 ```
 
-В логе при старте: `PveAuction v0.1.2 — скупка, раскладка 0.1.2`
+## 5. Проверка в игре
+
+`/shop` → в чате: **«сборка 0.1.2»**  
+Фермер → заголовок: **«Скупка [0.1.2]: Фермер»**
+
+Если в логе всё ещё **0.1.0** — `scp` не сработал или залил не тот файл.
