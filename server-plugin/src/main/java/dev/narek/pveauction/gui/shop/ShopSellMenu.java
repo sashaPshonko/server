@@ -110,7 +110,7 @@ public final class ShopSellMenu implements InventoryHolder {
             lore.add(Component.text("Вступи в клан для прокачки", NamedTextColor.DARK_GRAY));
         }
         lore.add(Component.empty());
-        lore.add(Component.text("Сырое над жареным", NamedTextColor.GRAY));
+        lore.add(Component.text("Пары: сырое над жареным", NamedTextColor.GRAY));
         return GuiItems.button(Material.BOOK,
                 Component.text(category.displayName(), NamedTextColor.GOLD, TextDecoration.BOLD),
                 lore.toArray(Component[]::new));

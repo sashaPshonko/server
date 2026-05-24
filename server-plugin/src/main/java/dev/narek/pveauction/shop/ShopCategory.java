@@ -34,15 +34,15 @@ public enum ShopCategory {
     )),
     BUTCHER("Мясник", Material.COOKED_BEEF, List.of(
             entry(Material.PORKCHOP, 6),
-            entry(Material.COOKED_PORKCHOP, 12),
+            entry(Material.COOKED_PORKCHOP, 7),
             entry(Material.BEEF, 7),
-            entry(Material.COOKED_BEEF, 14),
+            entry(Material.COOKED_BEEF, 8),
             entry(Material.CHICKEN, 5),
-            entry(Material.COOKED_CHICKEN, 10),
+            entry(Material.COOKED_CHICKEN, 6),
             entry(Material.MUTTON, 6),
-            entry(Material.COOKED_MUTTON, 12),
+            entry(Material.COOKED_MUTTON, 7),
             entry(Material.RABBIT, 5),
-            entry(Material.COOKED_RABBIT, 10)
+            entry(Material.COOKED_RABBIT, 6)
     )),
     MINER("Шахтёр", Material.DIAMOND, List.of(
             entry(Material.COAL, 4),

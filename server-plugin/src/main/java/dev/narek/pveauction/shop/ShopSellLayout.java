@@ -11,57 +11,105 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Сырое над жареным в одной колонке, строки вплотную.
- * Вся сетка по центру сундука (9 колонок × 4 ряда под товары).
+ * Мясник: сырое над жареным по колонкам.
+ * Остальные: плотная сетка без пустых ячеек под каждым предметом.
+ * Рыбак: пары слева, одиночные справа в тех же двух рядах.
  */
 public final class ShopSellLayout {
 
     private static final int WIDTH = 9;
-    private static final int MAX_COLS = 9;
-    /** Ряды 1–4 сундука (под шапкой, над низом). */
     private static final int CONTENT_ROWS = 4;
     private static final int CONTENT_ROW_START = 1;
 
     private ShopSellLayout() {}
 
     public static Map<Material, Integer> slotsFor(List<ShopEntry> entries) {
-        List<Placement> placements = buildPlacements(entries);
+        List<Placement> pairs = new ArrayList<>();
+        List<Material> singles = new ArrayList<>();
+        splitPlacements(entries, pairs, singles);
+
         Map<Material, Integer> slots = new HashMap<>();
-        if (placements.isEmpty()) {
+        if (pairs.isEmpty() && singles.isEmpty()) {
             return slots;
         }
-
-        int bandsNeeded = (placements.size() + MAX_COLS - 1) / MAX_COLS;
-        int rowPairs = bandsNeeded * 2;
-        int firstRow = CONTENT_ROW_START + Math.max(0, (CONTENT_ROWS - rowPairs) / 2);
-
-        int index = 0;
-        for (int band = 0; band < bandsNeeded && index < placements.size(); band++) {
-            int count = Math.min(MAX_COLS, placements.size() - index);
-            int colOffset = (WIDTH - count) / 2;
-            int topRow = firstRow + band * 2;
-            int bottomRow = topRow + 1;
-            int topBase = topRow * WIDTH;
-            int bottomBase = bottomRow * WIDTH;
-
-            for (int c = 0; c < count; c++) {
-                Placement placement = placements.get(index++);
-                int top = topBase + colOffset + c;
-                int bottom = bottomBase + colOffset + c;
-                if (placement.cooked() != null) {
-                    slots.put(placement.raw(), top);
-                    slots.put(placement.cooked(), bottom);
-                } else {
-                    slots.put(placement.material(), top);
-                }
-            }
+        if (!pairs.isEmpty() && singles.isEmpty()) {
+            layoutPairsOnly(pairs, slots);
+        } else if (pairs.isEmpty()) {
+            layoutSinglesOnly(singles, slots);
+        } else {
+            layoutMixed(pairs, singles, slots);
         }
         return slots;
     }
 
-    private static List<Placement> buildPlacements(List<ShopEntry> entries) {
+    private static void layoutPairsOnly(List<Placement> pairs, Map<Material, Integer> slots) {
+        int cols = pairs.size();
+        int colOffset = (WIDTH - cols) / 2;
+        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - 2) / 2;
+
+        for (int c = 0; c < cols; c++) {
+            Placement p = pairs.get(c);
+            int top = (firstRow) * WIDTH + colOffset + c;
+            int bottom = (firstRow + 1) * WIDTH + colOffset + c;
+            slots.put(p.raw(), top);
+            slots.put(p.cooked(), bottom);
+        }
+    }
+
+    private static void layoutSinglesOnly(List<Material> singles, Map<Material, Integer> slots) {
+        int count = singles.size();
+        int rows = rowsForCount(count);
+        int cols = (count + rows - 1) / rows;
+        cols = Math.min(cols, WIDTH);
+
+        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - rows) / 2;
+        int colOffset = (WIDTH - cols) / 2;
+
+        for (int i = 0; i < count; i++) {
+            int r = i / cols;
+            int c = i % cols;
+            slots.put(singles.get(i), (firstRow + r) * WIDTH + colOffset + c);
+        }
+    }
+
+    private static void layoutMixed(List<Placement> pairs, List<Material> singles, Map<Material, Integer> slots) {
+        int pairCols = pairs.size();
+        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - 2) / 2;
+
+        for (int c = 0; c < pairCols; c++) {
+            Placement p = pairs.get(c);
+            slots.put(p.raw(), firstRow * WIDTH + c);
+            slots.put(p.cooked(), (firstRow + 1) * WIDTH + c);
+        }
+
+        int singleArea = WIDTH - pairCols;
+        int singleRows = 2;
+        int cols = Math.min(singleArea, (singles.size() + singleRows - 1) / singleRows);
+        int colStart = pairCols + (singleArea - cols) / 2;
+
+        for (int i = 0; i < singles.size(); i++) {
+            int r = i / cols;
+            int c = i % cols;
+            slots.put(singles.get(i), (firstRow + r) * WIDTH + colStart + c);
+        }
+    }
+
+    /** Сколько рядов занять под N одиночных предметов (макс. 4). */
+    private static int rowsForCount(int count) {
+        if (count <= 9) {
+            return 1;
+        }
+        if (count <= 18) {
+            return 2;
+        }
+        if (count <= 27) {
+            return 3;
+        }
+        return 4;
+    }
+
+    private static void splitPlacements(List<ShopEntry> entries, List<Placement> pairs, List<Material> singles) {
         Set<Material> used = new HashSet<>();
-        List<Placement> result = new ArrayList<>();
         for (ShopEntry entry : entries) {
             Material mat = entry.material();
             if (used.contains(mat)) {
@@ -71,16 +119,15 @@ public final class ShopSellLayout {
             if (cooked.isPresent() && contains(entries, cooked.get())) {
                 used.add(mat);
                 used.add(cooked.get());
-                result.add(new Placement(mat, cooked.get()));
+                pairs.add(new Placement(mat, cooked.get()));
                 continue;
             }
             if (isCooked(mat) && contains(entries, rawVersion(mat).orElse(null))) {
                 continue;
             }
             used.add(mat);
-            result.add(new Placement(mat, null));
+            singles.add(mat);
         }
-        return result;
     }
 
     private static boolean contains(List<ShopEntry> entries, Material material) {
@@ -121,9 +168,5 @@ public final class ShopSellLayout {
         return material.name().startsWith("COOKED_");
     }
 
-    private record Placement(Material raw, Material cooked) {
-        Material material() {
-            return raw;
-        }
-    }
+    private record Placement(Material raw, Material cooked) {}
 }
