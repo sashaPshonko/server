@@ -60,34 +60,34 @@ public final class ShopSellSlots {
         Map<Material, Integer> s = new LinkedHashMap<>();
         s.put(Material.COD, 20);
         s.put(Material.COOKED_COD, 29);
-        s.put(Material.SALMON, 21);
-        s.put(Material.COOKED_SALMON, 30);
-        s.put(Material.TROPICAL_FISH, 22);
-        s.put(Material.PUFFERFISH, 23);
-        s.put(Material.NAUTILUS_SHELL, 24);
-        s.put(Material.LILY_PAD, 25);
-        s.put(Material.LEATHER, 31);
-        s.put(Material.INK_SAC, 32);
-        s.put(Material.SADDLE, 33);
-        s.put(Material.NAME_TAG, 34);
+        s.put(Material.NAUTILUS_SHELL, 21);
+        s.put(Material.SALMON, 30);
+        s.put(Material.COOKED_SALMON, 22);
+        s.put(Material.TROPICAL_FISH, 31);
+        s.put(Material.NAME_TAG, 23);
+        s.put(Material.PUFFERFISH, 32);
+        s.put(Material.LILY_PAD, 24);
+        s.put(Material.LEATHER, 33);
+        s.put(Material.INK_SAC, 25);
+        s.put(Material.SADDLE, 34);
         return s;
     }
 
     /** 12: 6 + 6 по центру. */
     private static Map<Material, Integer> loot() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.SPIDER_EYE, 20);
-        s.put(Material.ROTTEN_FLESH, 21);
-        s.put(Material.BONE, 22);
-        s.put(Material.STRING, 23);
-        s.put(Material.BLAZE_ROD, 24);
-        s.put(Material.BREEZE_ROD, 25);
-        s.put(Material.SLIME_BALL, 29);
-        s.put(Material.MAGMA_CREAM, 30);
-        s.put(Material.GUNPOWDER, 31);
-        s.put(Material.ENDER_PEARL, 32);
-        s.put(Material.PRISMARINE_SHARD, 33);
-        s.put(Material.SHULKER_SHELL, 34);
+        s.put(Material.BREEZE_ROD, 20);
+        s.put(Material.ROTTEN_FLESH, 29);
+        s.put(Material.SPIDER_EYE, 21);
+        s.put(Material.BONE, 30);
+        s.put(Material.BLAZE_ROD, 22);
+        s.put(Material.SLIME_BALL, 31);
+        s.put(Material.SHULKER_SHELL, 23);
+        s.put(Material.STRING, 32);
+        s.put(Material.GUNPOWDER, 24);
+        s.put(Material.MAGMA_CREAM, 33);
+        s.put(Material.PRISMARINE_SHARD, 25);
+        s.put(Material.ENDER_PEARL, 34);
         return s;
     }
 
