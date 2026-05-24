@@ -3,6 +3,7 @@ package dev.narek.pveauction.shop;
 import org.bukkit.Material;
 
 import java.util.List;
+import java.util.Optional;
 
 public enum ShopCategory {
     FARMER("Фермер", Material.WHEAT, List.of(
@@ -11,16 +12,7 @@ public enum ShopCategory {
             entry(Material.CHORUS_FRUIT, 7),
             entry(Material.SUGAR_CANE, 3),
             entry(Material.CACTUS, 3),
-            entry(Material.OAK_LOG, 5),
-            entry(Material.SPRUCE_LOG, 5),
-            entry(Material.BIRCH_LOG, 5),
-            entry(Material.JUNGLE_LOG, 5),
-            entry(Material.ACACIA_LOG, 5),
-            entry(Material.DARK_OAK_LOG, 5),
-            entry(Material.CHERRY_LOG, 5),
-            entry(Material.MANGROVE_LOG, 5),
-            entry(Material.CRIMSON_STEM, 6),
-            entry(Material.WARPED_STEM, 6)
+            entryWood(5)
     )),
     FOOD("Еда", Material.CARROT, List.of(
             entry(Material.CARROT, 4),
@@ -117,7 +109,20 @@ public enum ShopCategory {
         return ShopCategory.valueOf(id);
     }
 
+    public Optional<ShopEntry> findEntry(Material material) {
+        for (ShopEntry entry : entries) {
+            if (entry.accepts(material)) {
+                return Optional.of(entry);
+            }
+        }
+        return Optional.empty();
+    }
+
     private static ShopEntry entry(Material material, long basePrice) {
         return new ShopEntry(material, basePrice);
+    }
+
+    private static ShopEntry entryWood(long basePrice) {
+        return new ShopEntry(Material.OAK_LOG, basePrice, ShopCatalog.WOOD_LOGS);
     }
 }

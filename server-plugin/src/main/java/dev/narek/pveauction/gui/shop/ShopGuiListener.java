@@ -156,15 +156,11 @@ public final class ShopGuiListener implements Listener {
 
         runNext(() -> {
             try {
-                long basePrice = cat.entries().stream()
-                        .filter(e -> e.material() == material)
-                        .findFirst()
-                        .map(e -> e.basePrice())
-                        .orElse(0L);
-                if (basePrice <= 0) {
+                var entryOpt = cat.findEntry(material);
+                if (entryOpt.isEmpty()) {
                     return;
                 }
-                ShopService.SellResult result = shop.sell(player, cat, material, basePrice);
+                ShopService.SellResult result = shop.sell(player, cat, entryOpt.get());
                 result.send(player);
                 if (result.success()) {
                     openSell(player, cat);

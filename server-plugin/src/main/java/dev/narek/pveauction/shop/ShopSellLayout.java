@@ -92,12 +92,17 @@ public final class ShopSellLayout {
         }
         int base = count / rows;
         int extra = count % rows;
+        int maxInRow = 0;
+        for (int r = 0; r < rows; r++) {
+            maxInRow = Math.max(maxInRow, base + (r < extra ? 1 : 0));
+        }
+        int blockOffset = areaStartCol + Math.max(0, (areaWidth - maxInRow) / 2);
+
         int index = 0;
         for (int r = 0; r < rows; r++) {
             int inRow = base + (r < extra ? 1 : 0);
-            int colOffset = areaStartCol + Math.max(0, (areaWidth - inRow) / 2);
             for (int c = 0; c < inRow; c++) {
-                slots.put(singles.get(index++), (firstRow + r) * WIDTH + colOffset + c);
+                slots.put(singles.get(index++), (firstRow + r) * WIDTH + blockOffset + c);
             }
         }
     }

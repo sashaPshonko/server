@@ -3,6 +3,7 @@ package dev.narek.pveauction.gui.shop;
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.shop.ClanCategoryProgress;
 import dev.narek.pveauction.shop.SellAmountMode;
+import dev.narek.pveauction.shop.ShopCatalog;
 import dev.narek.pveauction.shop.ShopCategory;
 import dev.narek.pveauction.shop.ShopEntry;
 import dev.narek.pveauction.shop.ShopLeveling;
@@ -80,7 +81,7 @@ public final class ShopSellMenu implements InventoryHolder {
             }
             long unit = Math.max(1, Math.round(entry.basePrice() * multiplier));
             SellAmountMode mode = shop.sellMode(viewer, entry.material());
-            int inInv = mode.resolveCount(viewer, entry.material());
+            int inInv = SellAmountMode.countInInventory(viewer, entry);
             inventory.setItem(slot, sellIcon(entry, unit, inInv, mode));
         }
 
@@ -120,9 +121,13 @@ public final class ShopSellMenu implements InventoryHolder {
         ItemStack display = new ItemStack(entry.material());
         ItemMeta meta = display.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.translatable(entry.material().translationKey())
+            Component name = ShopCatalog.isWoodEntry(entry)
+                    ? Component.text("Древесина", NamedTextColor.WHITE, TextDecoration.BOLD)
+                    .append(Component.text(" (все виды)", NamedTextColor.GRAY))
+                    : Component.translatable(entry.material().translationKey())
                     .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false));
+                    .decoration(TextDecoration.ITALIC, false);
+            meta.displayName(name);
             meta.lore(List.of(
                     Component.empty(),
                     Component.text("Цена: ", NamedTextColor.GRAY)

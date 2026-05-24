@@ -32,7 +32,14 @@ public enum SellAmountMode {
     }
 
     public int resolveCount(Player player, Material material) {
-        int available = countInInventory(player, material);
+        return resolveCount(player, countInInventory(player, material));
+    }
+
+    public int resolveCount(Player player, ShopEntry entry) {
+        return resolveCount(player, countInInventory(player, entry));
+    }
+
+    private int resolveCount(Player player, int available) {
         if (available <= 0) {
             return 0;
         }
@@ -40,6 +47,14 @@ public enum SellAmountMode {
             return available;
         }
         return Math.min(amount, available);
+    }
+
+    public static int countInInventory(Player player, ShopEntry entry) {
+        int total = 0;
+        for (Material material : entry.accepts()) {
+            total += countInInventory(player, material);
+        }
+        return total;
     }
 
     public static int countInInventory(Player player, Material material) {

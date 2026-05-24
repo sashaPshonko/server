@@ -12,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -77,13 +79,14 @@ public final class ShopService {
         return shopDb.findFocusCategory(clanId).map(ShopCategory::byId);
     }
 
-    public SellResult sell(Player player, ShopCategory category, Material material, long basePrice) throws SQLException {
+    public SellResult sell(Player player, ShopCategory category, ShopEntry entry) throws SQLException {
         if (!plugin.economy().isEnabled()) {
             return SellResult.fail("Экономика не подключена.");
         }
 
-        SellAmountMode mode = sellMode(player, material);
-        int count = mode.resolveCount(player, material);
+        Material key = entry.material();
+        SellAmountMode mode = sellMode(player, key);
+        int count = mode.resolveCount(player, entry);
         if (count <= 0) {
             return SellResult.fail("Нет предметов в инвентаре.");
         }
@@ -96,14 +99,15 @@ public final class ShopService {
             mult = effectiveMultiplier(clanId, category);
         }
 
-        long unitPrice = Math.max(1, Math.round(basePrice * mult));
+        long unitPrice = Math.max(1, Math.round(entry.basePrice() * mult));
         long total = unitPrice * count;
 
-        if (!removeFromInventory(player, material, count)) {
+        List<ItemStack> removed = removeFromInventory(player, entry, count);
+        if (removed == null) {
             return SellResult.fail("Не удалось снять предметы.");
         }
         if (!plugin.economy().deposit(player, total)) {
-            player.getInventory().addItem(new ItemStack(material, count));
+            refundStacks(player, removed);
             return SellResult.fail("Не удалось выдать деньги.");
         }
 
@@ -153,15 +157,24 @@ public final class ShopService {
         shopDb.setFocusCategory(member.clanId(), category);
     }
 
-    private static boolean removeFromInventory(Player player, Material material, int amount) {
+    private static void refundStacks(Player player, List<ItemStack> stacks) {
+        for (ItemStack stack : stacks) {
+            player.getInventory().addItem(stack);
+        }
+    }
+
+    /** null — не хватило предметов. */
+    private static List<ItemStack> removeFromInventory(Player player, ShopEntry entry, int amount) {
         int left = amount;
+        List<ItemStack> removed = new ArrayList<>();
         ItemStack[] contents = player.getInventory().getStorageContents();
         for (int i = 0; i < contents.length; i++) {
             ItemStack stack = contents[i];
-            if (stack == null || stack.getType() != material) {
+            if (stack == null || !entry.accepts(stack.getType())) {
                 continue;
             }
             int take = Math.min(left, stack.getAmount());
+            removed.add(new ItemStack(stack.getType(), take));
             int remaining = stack.getAmount() - take;
             if (remaining <= 0) {
                 contents[i] = null;
@@ -171,12 +184,13 @@ public final class ShopService {
             left -= take;
             if (left <= 0) {
                 player.getInventory().setStorageContents(contents);
-                return true;
+                return removed;
             }
         }
         ItemStack off = player.getInventory().getItemInOffHand();
-        if (left > 0 && off.getType() == material) {
+        if (left > 0 && entry.accepts(off.getType())) {
             int take = Math.min(left, off.getAmount());
+            removed.add(new ItemStack(off.getType(), take));
             int remaining = off.getAmount() - take;
             if (remaining <= 0) {
                 player.getInventory().setItemInOffHand(null);
@@ -186,10 +200,12 @@ public final class ShopService {
             left -= take;
         }
         if (left > 0) {
-            return false;
+            refundStacks(player, removed);
+            player.getInventory().setStorageContents(contents);
+            return null;
         }
         player.getInventory().setStorageContents(contents);
-        return true;
+        return removed;
     }
 
     public record SellResult(
