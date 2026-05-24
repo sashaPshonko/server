@@ -29,7 +29,7 @@ import java.util.List;
 public final class ShopSellMenu implements InventoryHolder {
 
     /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
-    public static final String LAYOUT_BUILD = "0.1.1";
+    public static final String LAYOUT_BUILD = "0.1.2";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -50,7 +50,7 @@ public final class ShopSellMenu implements InventoryHolder {
     public static void open(PveAuctionPlugin plugin, ShopService shop, Player player, ShopCategory category) {
         ShopSellMenu menu = new ShopSellMenu(plugin, shop, player, category);
         menu.inventory = Bukkit.createInventory(menu, 54,
-                GuiText.title("Скупка: " + category.displayName(), NamedTextColor.GREEN));
+                GuiText.title("Скупка [" + LAYOUT_BUILD + "]: " + category.displayName(), NamedTextColor.GREEN));
         menu.fill();
         player.openInventory(menu.inventory);
     }
