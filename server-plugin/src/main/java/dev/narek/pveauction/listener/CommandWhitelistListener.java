@@ -12,7 +12,7 @@ public final class CommandWhitelistListener implements Listener {
 
     private static final Set<String> ALLOWED = Set.of(
             "ah", "admin", "rtp", "spawn",
-            "sethome", "home", "pay", "clan"
+            "sethome", "home", "pay", "clan", "shop"
     );
 
     @EventHandler(priority = EventPriority.LOWEST)

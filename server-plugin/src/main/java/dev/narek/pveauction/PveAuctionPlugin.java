@@ -10,8 +10,12 @@ import dev.narek.pveauction.command.HomeCommand;
 import dev.narek.pveauction.command.PayCommand;
 import dev.narek.pveauction.command.RtpCommand;
 import dev.narek.pveauction.command.SetHomeCommand;
+import dev.narek.pveauction.command.ShopCommand;
 import dev.narek.pveauction.command.SpawnCommand;
 import dev.narek.pveauction.db.ClanRepository;
+import dev.narek.pveauction.db.ShopRepository;
+import dev.narek.pveauction.gui.shop.ShopGuiListener;
+import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.db.LotRepository;
 import dev.narek.pveauction.db.PlayerRepository;
 import dev.narek.pveauction.gui.clan.ClanGuiListener;
@@ -36,6 +40,8 @@ public final class PveAuctionPlugin extends JavaPlugin {
     private ClanRepository clanRepository;
     private ClanService clanService;
     private ChatService chatService;
+    private ShopRepository shopRepository;
+    private ShopService shopService;
     private EconomyService economyService;
     private WorldTravelService worldTravelService;
     private ScoreboardService scoreboardService;
@@ -62,6 +68,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         clanService = new ClanService(this, clanRepository);
         chatService = new ChatService(this);
 
+        shopRepository = new ShopRepository(this);
+        shopRepository.init();
+        shopService = new ShopService(this, shopRepository);
+
         scoreboardService = new ScoreboardService(this);
         scoreboardListener = new ScoreboardListener(this, scoreboardService);
 
@@ -77,6 +87,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
         getServer().getPluginManager().registerEvents(scoreboardListener, this);
         getServer().getPluginManager().registerEvents(new ChatListener(this, chatService), this);
+        getServer().getPluginManager().registerEvents(new ShopGuiListener(this, shopService), this);
 
         long sbTicks = getConfig().getLong("scoreboard.update-ticks", 40L);
         getServer().getScheduler().runTaskTimer(this, scoreboardListener::refreshAll, sbTicks, sbTicks);
@@ -118,7 +129,9 @@ public final class PveAuctionPlugin extends JavaPlugin {
             clanCmd.setTabCompleter(new ClanCommand(this, clanService));
         }
 
-        getLogger().info("PveAuction: аукцион, кланы, /pay, дом; лимит " + maxActiveLots() + " лотов.");
+        registerCmd("shop", new ShopCommand());
+
+        getLogger().info("PveAuction: аукцион, кланы, магазин, /pay; лимит " + maxActiveLots() + " лотов.");
     }
 
     @Override
@@ -132,6 +145,13 @@ public final class PveAuctionPlugin extends JavaPlugin {
         if (clanRepository != null) {
             clanRepository.close();
         }
+        if (shopRepository != null) {
+            shopRepository.close();
+        }
+    }
+
+    public ShopService shop() {
+        return shopService;
     }
 
     private void registerCmd(String name, org.bukkit.command.CommandExecutor executor) {

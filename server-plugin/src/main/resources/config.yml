@@ -14,6 +14,11 @@ chat:
 clan:
   invite-ttl-seconds: 120
 
+# Скупка: прокачка категории клана (монеты от сдачи, не стаки)
+shop:
+  level-base-coins: 50
+  bonus-per-level: 0.1
+
 # Макс. активных лотов на одного игрока
 max-active-lots: 5
 

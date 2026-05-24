@@ -31,6 +31,9 @@ commands:
   clan:
     description: Кланы
     usage: /clan <подкоманда>
+  shop:
+    description: Магазин и скупка
+    usage: /shop
 
 permissions:
   pveauction.use:
@@ -56,4 +59,7 @@ permissions:
     default: true
   pveauction.clan:
     description: Команды клана
+    default: true
+  pveauction.shop:
+    description: /shop
     default: true
