@@ -1,5 +1,6 @@
 package dev.narek.pveauction.shop;
 
+import dev.narek.pveauction.gui.shop.ShopGuiGridLayout;
 import org.bukkit.Material;
 
 import java.util.ArrayList;
@@ -11,15 +12,13 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Мясник: сырое над жареным по колонкам.
- * Остальные: плотная сетка без пустых ячеек под каждым предметом.
- * Рыбак: пары слева, одиночные справа в тех же двух рядах.
+ * Мясник: сырое над жареным. Остальное — {@link ShopGuiGridLayout}.
  */
 public final class ShopSellLayout {
 
-    private static final int WIDTH = 9;
-    private static final int CONTENT_ROWS = 4;
-    private static final int CONTENT_ROW_START = 1;
+    private static final int WIDTH = ShopGuiGridLayout.WIDTH;
+    private static final int CONTENT_ROWS = ShopGuiGridLayout.CONTENT_ROWS;
+    private static final int CONTENT_ROW_START = ShopGuiGridLayout.CONTENT_ROW_START;
 
     private ShopSellLayout() {}
 
@@ -49,7 +48,7 @@ public final class ShopSellLayout {
 
         for (int c = 0; c < cols; c++) {
             Placement p = pairs.get(c);
-            int top = (firstRow) * WIDTH + colOffset + c;
+            int top = firstRow * WIDTH + colOffset + c;
             int bottom = (firstRow + 1) * WIDTH + colOffset + c;
             slots.put(p.raw(), top);
             slots.put(p.cooked(), bottom);
@@ -57,14 +56,17 @@ public final class ShopSellLayout {
     }
 
     private static void layoutSinglesOnly(List<Material> singles, Map<Material, Integer> slots) {
-        int rows = rowsForCount(singles.size());
-        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - rows) / 2;
-        placeSinglesGrid(singles, firstRow, rows, 0, WIDTH, slots);
+        int[] grid = ShopGuiGridLayout.slotsForCount(singles.size());
+        for (int i = 0; i < singles.size(); i++) {
+            slots.put(singles.get(i), grid[i]);
+        }
     }
 
     private static void layoutMixed(List<Placement> pairs, List<Material> singles, Map<Material, Integer> slots) {
         int pairCols = pairs.size();
-        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - 2) / 2;
+        int singleRows = ShopGuiGridLayout.rowsForCount(singles.size());
+        int blockRows = Math.max(2, singleRows);
+        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - blockRows) / 2;
 
         for (int c = 0; c < pairCols; c++) {
             Placement p = pairs.get(c);
@@ -72,53 +74,16 @@ public final class ShopSellLayout {
             slots.put(p.cooked(), (firstRow + 1) * WIDTH + c);
         }
 
-        placeSinglesGrid(singles, firstRow, 2, pairCols, WIDTH - pairCols, slots);
-    }
-
-    /**
-     * Лишние предметы — в верхние ряды; каждый ряд по центру своей зоны.
-     */
-    private static void placeSinglesGrid(
-            List<Material> singles,
-            int firstRow,
-            int rows,
-            int areaStartCol,
-            int areaWidth,
-            Map<Material, Integer> slots
-    ) {
-        int count = singles.size();
-        if (count == 0) {
-            return;
+        int[] grid = ShopGuiGridLayout.slotsForCount(
+                singles.size(),
+                pairCols,
+                WIDTH - pairCols,
+                firstRow,
+                blockRows
+        );
+        for (int i = 0; i < singles.size(); i++) {
+            slots.put(singles.get(i), grid[i]);
         }
-        int base = count / rows;
-        int extra = count % rows;
-        int maxInRow = 0;
-        for (int r = 0; r < rows; r++) {
-            maxInRow = Math.max(maxInRow, base + (r < extra ? 1 : 0));
-        }
-        int blockOffset = areaStartCol + Math.max(0, (areaWidth - maxInRow) / 2);
-
-        int index = 0;
-        for (int r = 0; r < rows; r++) {
-            int inRow = base + (r < extra ? 1 : 0);
-            for (int c = 0; c < inRow; c++) {
-                slots.put(singles.get(index++), (firstRow + r) * WIDTH + blockOffset + c);
-            }
-        }
-    }
-
-    /** Сколько рядов занять под N одиночных предметов (макс. 4). */
-    private static int rowsForCount(int count) {
-        if (count <= 9) {
-            return 1;
-        }
-        if (count <= 18) {
-            return 2;
-        }
-        if (count <= 27) {
-            return 3;
-        }
-        return 4;
     }
 
     private static void splitPlacements(List<ShopEntry> entries, List<Placement> pairs, List<Material> singles) {
