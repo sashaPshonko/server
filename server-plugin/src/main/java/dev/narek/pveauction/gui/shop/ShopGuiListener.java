@@ -82,7 +82,7 @@ public final class ShopGuiListener implements Listener {
         if (raw >= menu.getInventory().getSize()) {
             return;
         }
-        if (raw == menu.slotSell()) {
+        if (raw == ShopMainMenu.SLOT_SELL) {
             runNext(() -> openCategories(player));
         }
     }

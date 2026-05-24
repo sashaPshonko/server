@@ -1,7 +1,10 @@
 package dev.narek.pveauction.gui.shop;
 
 /**
- * Единая сетка для всех меню скупки: блок по центру, ряды с одного края.
+ * Только для меню сдачи предметов.
+ * ≤9 — один ряд по центру.
+ * Чётное 10+ — два ряда поровну.
+ * Нечётное — один предмет сверху по центру, остальное два ряда 50/50.
  */
 public final class ShopGuiGridLayout {
 
@@ -11,7 +14,6 @@ public final class ShopGuiGridLayout {
 
     private ShopGuiGridLayout() {}
 
-    /** Слоты по порядку (слева направо, сверху вниз). */
     public static int[] slotsForCount(int count) {
         return slotsForCount(count, 0, WIDTH, CONTENT_ROW_START, CONTENT_ROWS);
     }
@@ -26,42 +28,62 @@ public final class ShopGuiGridLayout {
         if (count <= 0) {
             return new int[0];
         }
-        int rows = rowsForCount(count);
-        int firstRow = contentRowStart + Math.max(0, (contentRowsAvailable - rows) / 2);
-        int[] rowSizes = rowSizes(count, rows);
-        int maxInRow = 0;
-        for (int size : rowSizes) {
-            maxInRow = Math.max(maxInRow, size);
+        if (count <= 9) {
+            return oneRow(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable, 1);
         }
-        int blockOffset = areaStartCol + Math.max(0, (areaWidth - maxInRow) / 2);
+        if (count % 2 == 1) {
+            return oddLayout(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable);
+        }
+        return twoRows(count, areaStartCol, areaWidth, contentRowStart, contentRowsAvailable);
+    }
 
+    private static int[] oneRow(
+            int count,
+            int areaStart,
+            int areaWidth,
+            int rowStart,
+            int rowsAvail,
+            int usedRows
+    ) {
         int[] slots = new int[count];
+        int firstRow = rowStart + Math.max(0, (rowsAvail - usedRows) / 2);
+        int colOffset = areaStart + Math.max(0, (areaWidth - count) / 2);
+        for (int i = 0; i < count; i++) {
+            slots[i] = firstRow * WIDTH + colOffset + i;
+        }
+        return slots;
+    }
+
+    private static int[] twoRows(int count, int areaStart, int areaWidth, int rowStart, int rowsAvail) {
+        int[] slots = new int[count];
+        int perRow = count / 2;
+        int firstRow = rowStart + Math.max(0, (rowsAvail - 2) / 2);
         int index = 0;
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < rowSizes[r]; c++) {
-                slots[index++] = (firstRow + r) * WIDTH + blockOffset + c;
+        for (int r = 0; r < 2; r++) {
+            int colOffset = areaStart + Math.max(0, (areaWidth - perRow) / 2);
+            for (int c = 0; c < perRow; c++) {
+                slots[index++] = (firstRow + r) * WIDTH + colOffset + c;
             }
         }
         return slots;
     }
 
-    public static int rowsForCount(int count) {
-        if (count <= 9) {
-            return 1;
-        }
-        if (count <= 27) {
-            return 3;
-        }
-        return 4;
-    }
+    private static int[] oddLayout(int count, int areaStart, int areaWidth, int rowStart, int rowsAvail) {
+        int[] slots = new int[count];
+        int rest = count - 1;
+        int perRow = rest / 2;
+        int firstRow = rowStart + Math.max(0, (rowsAvail - 3) / 2);
 
-    private static int[] rowSizes(int count, int rows) {
-        int base = count / rows;
-        int extra = count % rows;
-        int[] sizes = new int[rows];
-        for (int r = 0; r < rows; r++) {
-            sizes[r] = base + (r < extra ? 1 : 0);
+        int topCol = areaStart + (areaWidth - 1) / 2;
+        slots[0] = firstRow * WIDTH + topCol;
+
+        int index = 1;
+        for (int r = 1; r <= 2; r++) {
+            int colOffset = areaStart + Math.max(0, (areaWidth - perRow) / 2);
+            for (int c = 0; c < perRow; c++) {
+                slots[index++] = (firstRow + r) * WIDTH + colOffset + c;
+            }
         }
-        return sizes;
+        return slots;
     }
 }

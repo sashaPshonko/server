@@ -25,6 +25,8 @@ import java.util.Optional;
 public final class ShopCategoryMenu implements InventoryHolder {
 
     public static final int SLOT_BACK = 49;
+    /** Как было: два ряда 5+1 не трогаем — отдельная раскладка категорий. */
+    private static final int[] CATEGORY_SLOTS = {20, 21, 22, 23, 24, 31};
 
     private final PveAuctionPlugin plugin;
     private final ShopService shop;
@@ -56,9 +58,8 @@ public final class ShopCategoryMenu implements InventoryHolder {
         Optional<ShopCategory> focus = clanId != null ? shop.focusCategory(clanId) : Optional.empty();
 
         ShopCategory[] cats = ShopCategory.values();
-        int[] gridSlots = ShopGuiGridLayout.slotsForCount(cats.length);
-        for (int i = 0; i < cats.length && i < gridSlots.length; i++) {
-            int slot = gridSlots[i];
+        for (int i = 0; i < cats.length && i < CATEGORY_SLOTS.length; i++) {
+            int slot = CATEGORY_SLOTS[i];
             ShopCategory cat = cats[i];
             slotCategory.put(slot, cat);
             inventory.setItem(slot, categoryIcon(cat, clanId, focus));

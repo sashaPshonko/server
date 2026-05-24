@@ -64,9 +64,7 @@ public final class ShopSellLayout {
 
     private static void layoutMixed(List<Placement> pairs, List<Material> singles, Map<Material, Integer> slots) {
         int pairCols = pairs.size();
-        int singleRows = ShopGuiGridLayout.rowsForCount(singles.size());
-        int blockRows = Math.max(2, singleRows);
-        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - blockRows) / 2;
+        int firstRow = CONTENT_ROW_START + (CONTENT_ROWS - 2) / 2;
 
         for (int c = 0; c < pairCols; c++) {
             Placement p = pairs.get(c);
@@ -78,8 +76,8 @@ public final class ShopSellLayout {
                 singles.size(),
                 pairCols,
                 WIDTH - pairCols,
-                firstRow,
-                blockRows
+                CONTENT_ROW_START,
+                CONTENT_ROWS
         );
         for (int i = 0; i < singles.size(); i++) {
             slots.put(singles.get(i), grid[i]);

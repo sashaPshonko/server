@@ -13,13 +13,11 @@ import org.bukkit.inventory.InventoryHolder;
 
 public final class ShopMainMenu implements InventoryHolder {
 
-    private static final int CHEST27_ROWS = 3;
-    private static final int CHEST27_ROW_START = 1;
+    public static final int SLOT_BUY = 11;
+    public static final int SLOT_SELL = 15;
 
     private final Player viewer;
     private Inventory inventory;
-    private int slotBuy;
-    private int slotSell;
 
     private ShopMainMenu(Player viewer) {
         this.viewer = viewer;
@@ -34,23 +32,15 @@ public final class ShopMainMenu implements InventoryHolder {
 
     private void fill() {
         ShopGuiLayout.fillChest27(inventory);
-        int[] slots = ShopGuiGridLayout.slotsForCount(2, 0, ShopGuiGridLayout.WIDTH, CHEST27_ROW_START, CHEST27_ROWS);
-        slotBuy = slots[0];
-        slotSell = slots[1];
-
         inventory.setItem(4, GuiItems.button(Material.NETHER_STAR,
                 Component.text("4NAREK", NamedTextColor.GOLD, TextDecoration.BOLD),
                 Component.text("Торговый центр", NamedTextColor.GRAY)));
-        inventory.setItem(slotBuy, GuiItems.button(Material.EMERALD,
+        inventory.setItem(SLOT_BUY, GuiItems.button(Material.EMERALD,
                 Component.text("МАГАЗИН", NamedTextColor.GRAY, TextDecoration.BOLD),
                 Component.text("Скоро", NamedTextColor.DARK_GRAY)));
-        inventory.setItem(slotSell, GuiItems.button(Material.GOLD_INGOT,
+        inventory.setItem(SLOT_SELL, GuiItems.button(Material.GOLD_INGOT,
                 Component.text("СКУПКА", NamedTextColor.GREEN, TextDecoration.BOLD),
                 Component.text("ЛКМ — открыть", NamedTextColor.YELLOW)));
-    }
-
-    public int slotSell() {
-        return slotSell;
     }
 
     public Player viewer() {
