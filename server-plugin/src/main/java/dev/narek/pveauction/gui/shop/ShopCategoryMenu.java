@@ -111,9 +111,10 @@ public final class ShopCategoryMenu implements InventoryHolder {
         }
         lore.add(Component.empty());
         lore.add(Component.text("ЛКМ — открыть", NamedTextColor.GREEN, TextDecoration.BOLD));
-        return GuiItems.button(cat.icon(),
+        ItemStack icon = GuiItems.button(cat.icon(),
                 Component.text(cat.displayName(), NamedTextColor.WHITE, TextDecoration.BOLD),
                 lore.toArray(Component[]::new));
+        return ShopGuiTags.tagCategory(plugin, icon, cat);
     }
 
     public ShopCategory categoryAt(int slot) {

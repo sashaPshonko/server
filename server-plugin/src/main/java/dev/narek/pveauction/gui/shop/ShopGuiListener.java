@@ -2,9 +2,9 @@ package dev.narek.pveauction.gui.shop;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.shop.ShopCategory;
-import dev.narek.pveauction.shop.ShopEntry;
 import dev.narek.pveauction.shop.ShopService;
 import dev.narek.pveauction.util.Msg;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,8 +14,10 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 import java.sql.SQLException;
+import java.util.Optional;
 
 public final class ShopGuiListener implements Listener {
 
@@ -80,7 +82,7 @@ public final class ShopGuiListener implements Listener {
             return;
         }
         if (raw == ShopMainMenu.SLOT_SELL) {
-            openCategories(player);
+            runNext(() -> openCategories(player));
         }
     }
 
@@ -96,38 +98,43 @@ public final class ShopGuiListener implements Listener {
 
         if (raw == ShopCategoryMenu.SLOT_MODE) {
             shop.cycleSellMode(player);
-            try {
-                menu.reload();
-            } catch (SQLException e) {
-                dbError(player, e);
-            }
+            runNext(() -> {
+                try {
+                    menu.reload();
+                } catch (SQLException e) {
+                    dbError(player, e);
+                }
+            });
             return;
         }
 
         if (raw == ShopCategoryMenu.SLOT_BACK) {
-            ShopMainMenu.open(player);
+            runNext(() -> ShopMainMenu.open(player));
             return;
         }
 
-        ShopCategory cat = menu.categoryAt(raw);
-        if (cat == null) {
+        Optional<ShopCategory> catOpt = ShopGuiTags.readCategory(plugin, event.getCurrentItem());
+        if (catOpt.isEmpty()) {
             return;
         }
+        ShopCategory cat = catOpt.get();
 
         if (event.isShiftClick()) {
-            try {
-                shop.setClanFocus(player, cat);
-                Msg.clan(player, Msg.ok("Бонус клана: «" + cat.displayName() + "»"));
-                menu.reload();
-            } catch (SQLException e) {
-                dbError(player, e);
-            } catch (IllegalStateException e) {
-                Msg.server(player, Msg.err(e.getMessage()));
-            }
+            runNext(() -> {
+                try {
+                    shop.setClanFocus(player, cat);
+                    Msg.clan(player, Msg.ok("Бонус клана: «" + cat.displayName() + "»"));
+                    menu.reload();
+                } catch (SQLException e) {
+                    dbError(player, e);
+                } catch (IllegalStateException e) {
+                    Msg.server(player, Msg.err(e.getMessage()));
+                }
+            });
             return;
         }
 
-        openSell(player, cat);
+        runNext(() -> openSell(player, cat));
     }
 
     private void handleSell(InventoryClickEvent event, Player player, ShopSellMenu menu) {
@@ -142,30 +149,41 @@ public final class ShopGuiListener implements Listener {
 
         if (raw == ShopSellMenu.SLOT_MODE) {
             shop.cycleSellMode(player);
-            menu.refresh();
+            runNext(menu::refresh);
             return;
         }
 
         if (raw == ShopSellMenu.SLOT_BACK) {
-            openCategories(player);
+            runNext(() -> openCategories(player));
             return;
         }
 
-        ShopEntry entry = menu.entryAt(raw);
-        if (entry == null) {
+        Optional<Material> matOpt = ShopGuiTags.readMaterial(plugin, event.getCurrentItem());
+        if (matOpt.isEmpty()) {
             return;
         }
-
+        Material material = matOpt.get();
         ShopCategory cat = menu.category();
-        try {
-            ShopService.SellResult result = shop.sell(player, cat, entry.material(), entry.basePrice());
-            result.send(player);
-            if (result.success()) {
-                openSell(player, cat);
+
+        runNext(() -> {
+            try {
+                long basePrice = cat.entries().stream()
+                        .filter(e -> e.material() == material)
+                        .findFirst()
+                        .map(e -> e.basePrice())
+                        .orElse(0L);
+                if (basePrice <= 0) {
+                    return;
+                }
+                ShopService.SellResult result = shop.sell(player, cat, material, basePrice);
+                result.send(player);
+                if (result.success()) {
+                    openSell(player, cat);
+                }
+            } catch (SQLException e) {
+                dbError(player, e);
             }
-        } catch (SQLException e) {
-            dbError(player, e);
-        }
+        });
     }
 
     private void openCategories(Player player) {
@@ -187,6 +205,10 @@ public final class ShopGuiListener implements Listener {
         } catch (SQLException e) {
             dbError(player, e);
         }
+    }
+
+    private void runNext(Runnable task) {
+        plugin.getServer().getScheduler().runTask(plugin, task);
     }
 
     private void dbError(Player player, SQLException e) {

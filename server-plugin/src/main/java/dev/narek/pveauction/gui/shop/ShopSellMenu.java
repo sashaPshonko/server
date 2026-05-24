@@ -58,7 +58,7 @@ public final class ShopSellMenu implements InventoryHolder {
     public static void open(PveAuctionPlugin plugin, ShopService shop, Player player, ShopCategory category, double mult) {
         ShopSellMenu menu = new ShopSellMenu(plugin, shop, player, category, mult);
         menu.inventory = Bukkit.createInventory(menu, 54,
-                GuiText.title(category.displayName(), NamedTextColor.GREEN));
+                GuiText.title("Скупка: " + category.displayName(), NamedTextColor.GREEN));
         menu.fill();
         player.openInventory(menu.inventory);
     }
@@ -123,7 +123,7 @@ public final class ShopSellMenu implements InventoryHolder {
             GuiItems.decorateMeta(meta);
             display.setItemMeta(meta);
         }
-        return display;
+        return ShopGuiTags.tagMaterial(plugin, display, entry.material());
     }
 
     public ShopEntry entryAt(int slot) {
