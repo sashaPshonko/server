@@ -29,7 +29,7 @@ import java.util.List;
 public final class ShopSellMenu implements InventoryHolder {
 
     /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
-    public static final String LAYOUT_BUILD = "0.1.7";
+    public static final String LAYOUT_BUILD = "0.1.8";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -110,7 +110,6 @@ public final class ShopSellMenu implements InventoryHolder {
     private void placeFood(double multiplier) {
         for (ShopEntry entry : category.entries()) {
             int slot = switch (entry.material()) {
-                case CARROT -> 20;
                 case POTATO -> 21;
                 case BEETROOT -> 22;
                 case SWEET_BERRIES -> 23;
@@ -118,6 +117,7 @@ public final class ShopSellMenu implements InventoryHolder {
                 case WHEAT -> 30;
                 case MELON_SLICE -> 31;
                 case PUMPKIN -> 32;
+                case CARROT -> 33;
                 default -> -1;
             };
             put(entry, slot, multiplier);

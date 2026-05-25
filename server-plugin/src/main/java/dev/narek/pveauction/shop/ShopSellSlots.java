@@ -41,7 +41,6 @@ public final class ShopSellSlots {
     /** 8 предметов: 4 + 4 (колонки 2–5). */
     private static Map<Material, Integer> food() {
         Map<Material, Integer> s = new LinkedHashMap<>();
-        s.put(Material.CARROT, 20);
         s.put(Material.POTATO, 21);
         s.put(Material.BEETROOT, 22);
         s.put(Material.SWEET_BERRIES, 23);
@@ -49,6 +48,7 @@ public final class ShopSellSlots {
         s.put(Material.WHEAT, 30);
         s.put(Material.MELON_SLICE, 31);
         s.put(Material.PUMPKIN, 32);
+        s.put(Material.CARROT, 33);
         return s;
     }
 
