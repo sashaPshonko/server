@@ -36,7 +36,7 @@ SERVER="$2"
 JAR_NAME="$3"
 
 rm -rf "${PLUGINS}/.paper-remapped"
-rm -f "${PLUGINS}"/PveAuction-0.1.0.jar "${PLUGINS}"/PveAuction-0.1.1.jar "${PLUGINS}"/PveAuction-0.1.2.jar 2>/dev/null || true
+rm -f "${PLUGINS}"/PveAuction.jar "${PLUGINS}"/PveAuction-*.jar 2>/dev/null || true
 
 echo "=== JAR на VPS ==="
 ls -la "${PLUGINS}"/PveAuction*.jar
@@ -59,4 +59,4 @@ echo "ОБЯЗАТЕЛЬНО: stop в консоли сервера, потом 
 REMOTE_SCRIPT
 
 echo ""
-echo "Готово. В игре: /shop — в чате «сборка 0.1.3», в заголовке «Скупка [0.1.3]»."
+echo "Готово. В игре: /shop — в чате «сборка 0.1.8», в заголовке «Скупка [0.1.8]»."

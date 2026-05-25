@@ -3,23 +3,29 @@
 ## Проблема из лога
 
 ```
-PveAuction (0.1.0)
-раскладка 0.1.1
+PveAuction v0.1.2 — скупка, раскладка 0.1.2
 ```
 
-На сервере **старый JAR**. Нужен **PveAuction-0.1.2.jar** и удаление `PveAuction-0.1.0.jar`.
+На VPS **старый JAR** (0.1.2). Локально актуальный: **PveAuction-0.1.8.jar**.
+
+Частая причина: в `plugins/` лежит несколько `PveAuction-*.jar` — Paper грузит не тот. Перед заливкой удалить **все** старые.
 
 `stop` — только **в консоли Minecraft** (screen), не в обычном bash.
 
 ---
 
-## 1. С Mac — залить JAR
+## 1. С Mac — сборка и заливка
 
 ```bash
 cd /Users/sasha_pshonko/Documents/4narek/server/server-plugin
 ./build.sh
+./deploy-remote.sh
+```
 
-scp build/libs/PveAuction-0.1.2.jar root@159.194.200.114:/root/server/plugins/
+Или вручную:
+
+```bash
+scp build/libs/PveAuction-0.1.8.jar root@159.194.200.114:/root/server/plugins/
 ```
 
 ## 2. На VPS — удалить старое
@@ -28,10 +34,11 @@ scp build/libs/PveAuction-0.1.2.jar root@159.194.200.114:/root/server/plugins/
 ssh root@159.194.200.114
 
 cd /root/server/plugins
-rm -f PveAuction-0.1.0.jar PveAuction-0.1.1.jar
+rm -f PveAuction.jar PveAuction-*.jar
 rm -rf .paper-remapped
+# залить свежий JAR (если ещё не scp)
 ls -la PveAuction*.jar
-# должен остаться только PveAuction-0.1.2.jar (свежая дата)
+# должен остаться только PveAuction-0.1.8.jar
 ```
 
 ## 3. Перезапуск сервера
@@ -47,7 +54,7 @@ stop
 # Ctrl+A D — отсоединиться
 ```
 
-**Вариант B** — просто убить процесс:
+**Вариант B** — убить процесс:
 
 ```bash
 pkill -f paper.jar
@@ -56,18 +63,20 @@ cd /root/server
 ./start.sh
 ```
 
+Не используй `/reload` для плагинов — нужен полный рестарт.
+
 ## 4. Проверка в логе
 
 Должно быть:
 
 ```
-[PveAuction] Loading server plugin PveAuction v0.1.2
-[PveAuction] PveAuction v0.1.2 — скупка, раскладка 0.1.2
+[PveAuction] Loading server plugin PveAuction v0.1.8
+[PveAuction] PveAuction v0.1.8 — скупка, раскладка 0.1.8
 ```
 
 ## 5. Проверка в игре
 
-`/shop` → в чате: **«сборка 0.1.2»**  
-Фермер → заголовок: **«Скупка [0.1.2]: Фермер»**
+`/shop` → в чате: **«сборка 0.1.8»**  
+Еда → морковь в слоте **33**; рыбак → треска **20** / жареная **29**.
 
-Если в логе всё ещё **0.1.0** — `scp` не сработал или залил не тот файл.
+Если в логе всё ещё **0.1.2** — на VPS остался старый jar или не было `stop` + `./start.sh`.
