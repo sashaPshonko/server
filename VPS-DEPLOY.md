@@ -28,20 +28,62 @@ cd /Users/sasha_pshonko/Documents/4narek/server/server-plugin
 scp build/libs/PveAuction-0.1.8.jar root@159.194.200.114:/root/server/plugins/
 ```
 
-## 2. На VPS — удалить старое
+## 2. На VPS — удалить старое и проверить JAR
+
+**Сначала залей JAR с Mac, потом rm** — иначе в `plugins/` не останется ни одного файла.
 
 ```bash
 ssh root@159.194.200.114
 
 cd /root/server/plugins
-rm -f PveAuction.jar PveAuction-*.jar
+ls -la PveAuction*.jar    # должен быть PveAuction-0.1.8.jar
+rm -f PveAuction.jar      # только дубликаты без версии в имени
 rm -rf .paper-remapped
-# залить свежий JAR (если ещё не scp)
-ls -la PveAuction*.jar
-# должен остаться только PveAuction-0.1.8.jar
 ```
 
-## 3. Перезапуск сервера
+Если `ls: cannot access 'PveAuction*.jar'` — на Mac снова:
+
+```bash
+scp build/libs/PveAuction-0.1.8.jar root@159.194.200.114:/root/server/plugins/
+```
+
+## 3. Где сервер и как перезапустить
+
+`stop` и `./start.sh` **не в bash** — `stop` только в консоли Minecraft.
+
+Найди сервер на VPS:
+
+```bash
+ls -la /root/server/
+find /root -maxdepth 4 -name 'paper.jar' 2>/dev/null
+find /root -maxdepth 4 -name 'start.sh' 2>/dev/null
+ps aux | grep -E 'paper|minecraft' | grep -v grep
+screen -ls
+tmux ls 2>/dev/null
+systemctl status minecraft 2>/dev/null
+```
+
+- Если есть `/root/server/paper.jar` и `/root/server/start.sh`:
+
+```bash
+cd /root/server
+screen -ls
+# подключись к сессии из списка, например:
+screen -r 12345.minecraft
+# внутри screen введи:
+stop
+# после выключения (в том же screen или новом ssh):
+cd /root/server && ./start.sh
+# Ctrl+A, затем D — выйти из screen
+```
+
+- Если `paper.jar` в другой папке — `cd` туда, где лежит `paper.jar`, и запускай `./start.sh` оттуда.
+
+- Если сервер в **systemd**: `systemctl restart minecraft` (имя смотри в `systemctl list-units`).
+
+- Если процесс уже крутится без screen — после заливки JAR: `systemctl restart …` или `kill` + `./start.sh` из каталога с `paper.jar`.
+
+## 4. Перезапуск (кратко)
 
 **Вариант A** — сервер в screen:
 
@@ -65,7 +107,7 @@ cd /root/server
 
 Не используй `/reload` для плагинов — нужен полный рестарт.
 
-## 4. Проверка в логе
+## 5. Проверка в логе
 
 Должно быть:
 
@@ -74,7 +116,7 @@ cd /root/server
 [PveAuction] PveAuction v0.1.8 — скупка, раскладка 0.1.8
 ```
 
-## 5. Проверка в игре
+## 6. Проверка в игре
 
 `/shop` → в чате: **«сборка 0.1.8»**  
 Еда → морковь в слоте **33**; рыбак → треска **20** / жареная **29**.

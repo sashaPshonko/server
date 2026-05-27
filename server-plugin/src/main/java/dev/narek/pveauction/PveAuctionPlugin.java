@@ -26,6 +26,7 @@ import dev.narek.pveauction.economy.EconomyService;
 import dev.narek.pveauction.economy.EconomyHookListener;
 import dev.narek.pveauction.gui.GuiListener;
 import dev.narek.pveauction.listener.CommandWhitelistListener;
+import dev.narek.pveauction.listener.SpawnItemCleanupTask;
 import dev.narek.pveauction.listener.SpawnWorldListener;
 import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -81,6 +82,17 @@ public final class PveAuctionPlugin extends JavaPlugin {
         worldTravelService.ensureSpawnNight();
         worldTravelService.refreshLocations();
         getServer().getScheduler().runTaskTimer(this, worldTravelService::ensureSpawnNight, 100L, 200L);
+
+        long itemDespawnSec = getConfig().getLong("spawn-item-despawn-seconds", 60L);
+        if (itemDespawnSec > 0) {
+            int despawnSec = (int) Math.min(itemDespawnSec, Integer.MAX_VALUE / 20);
+            getServer().getScheduler().runTaskTimer(
+                    this,
+                    new SpawnItemCleanupTask(this, despawnSec),
+                    40L,
+                    40L
+            );
+        }
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new ClanGuiListener(this, clanService), this);

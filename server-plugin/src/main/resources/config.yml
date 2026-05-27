@@ -53,7 +53,7 @@ teleport-to-spawn-on-join: true
 spawn-location:
   world: world
   x: 8.5
-  y: -58
+  y: -21
   z: 8.5
   yaw: 0
   pitch: 0
@@ -71,3 +71,6 @@ loading-min-ms: 600
 
 # На спавне /rtp запрещён — только яма (Y < spawn-rtp-trigger-y)
 spawn-always-night: true
+
+# Дроп на спавне удаляется, если лежит дольше N секунд (0 = выключить)
+spawn-item-despawn-seconds: 60

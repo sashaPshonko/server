@@ -17,6 +17,9 @@ public final class CommandWhitelistListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCommand(PlayerCommandPreprocessEvent event) {
+        if (event.getPlayer().isOp() || event.getPlayer().hasPermission("pveauction.admin")) {
+            return;
+        }
         String message = event.getMessage().trim();
         if (!message.startsWith("/")) {
             return;

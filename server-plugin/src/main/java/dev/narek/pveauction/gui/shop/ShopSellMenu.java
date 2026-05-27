@@ -29,7 +29,7 @@ import java.util.List;
 public final class ShopSellMenu implements InventoryHolder {
 
     /** Меняй при деплое — видно в книге в слоте 4, если JAR обновился. */
-    public static final String LAYOUT_BUILD = "0.1.8";
+    public static final String LAYOUT_BUILD = "0.1.9";
 
     public static final int SLOT_BACK = 49;
     public static final int SLOT_INFO = 4;
@@ -137,7 +137,7 @@ public final class ShopSellMenu implements InventoryHolder {
                 case PUFFERFISH -> 32;
                 case LILY_PAD -> 24;
                 case LEATHER -> 33;
-                case INK_SAC -> 25;
+                case INK_SAC -> 28;
                 case SADDLE -> 34;
                 default -> -1;
             };
@@ -158,7 +158,7 @@ public final class ShopSellMenu implements InventoryHolder {
                 case STRING -> 32;
                 case GUNPOWDER -> 24;
                 case MAGMA_CREAM -> 33;
-                case PRISMARINE_SHARD -> 25;
+                case PRISMARINE_SHARD -> 28;
                 case ENDER_PEARL -> 34;
                 default -> -1;
             };

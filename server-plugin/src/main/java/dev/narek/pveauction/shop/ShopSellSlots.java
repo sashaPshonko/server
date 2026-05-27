@@ -68,7 +68,7 @@ public final class ShopSellSlots {
         s.put(Material.PUFFERFISH, 32);
         s.put(Material.LILY_PAD, 24);
         s.put(Material.LEATHER, 33);
-        s.put(Material.INK_SAC, 25);
+        s.put(Material.INK_SAC, 28);
         s.put(Material.SADDLE, 34);
         return s;
     }
@@ -86,7 +86,7 @@ public final class ShopSellSlots {
         s.put(Material.STRING, 32);
         s.put(Material.GUNPOWDER, 24);
         s.put(Material.MAGMA_CREAM, 33);
-        s.put(Material.PRISMARINE_SHARD, 25);
+        s.put(Material.PRISMARINE_SHARD, 28);
         s.put(Material.ENDER_PEARL, 34);
         return s;
     }
