@@ -1,6 +1,9 @@
 package dev.narek.pveauction.scoreboard;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.donate.DonateService;
+import dev.narek.pveauction.nametag.NameTagService;
+import dev.narek.pveauction.model.PlayerDonate;
 import dev.narek.pveauction.model.PlayerProfile;
 import dev.narek.pveauction.util.GuiItems;
 import dev.narek.pveauction.util.RankColors;
@@ -18,6 +21,7 @@ import org.bukkit.scoreboard.Team;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,13 +30,24 @@ public final class ScoreboardService {
     private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
 
     private final PveAuctionPlugin plugin;
+    private final NameTagService nameTags;
     private final Map<UUID, Scoreboard> boards = new ConcurrentHashMap<>();
 
-    public ScoreboardService(PveAuctionPlugin plugin) {
+    public ScoreboardService(PveAuctionPlugin plugin, NameTagService nameTags) {
         this.plugin = plugin;
+        this.nameTags = nameTags;
     }
 
-    public void show(Player player, PlayerProfile profile) {
+    public Scoreboard getBoard(Player player) {
+        return boards.get(player.getUniqueId());
+    }
+
+    public void show(Player player, PlayerProfile profile, Optional<PlayerDonate> primaryDonate) {
+        show(player, profile, primaryDonate, false);
+    }
+
+    /** @param syncNametags обновить teams над головами на этом scoreboard (только join / донат / клан) */
+    public void show(Player player, PlayerProfile profile, Optional<PlayerDonate> primaryDonate, boolean syncNametags) {
         if (!plugin.getConfig().getBoolean("scoreboard.enabled", true)) {
             return;
         }
@@ -46,8 +61,10 @@ public final class ScoreboardService {
         List<Component> lines = new ArrayList<>();
         lines.add(pad(indent, Component.empty()));
         lines.add(pad(indent, Component.text(player.getName(), NamedTextColor.WHITE)));
-        lines.add(pad(indent, Component.text("Ранг: ", NamedTextColor.GRAY)
-                .append(Component.text(profile.rankDisplayName(), rankColor))));
+        Component rankValue = primaryDonate
+                .<Component>map(DonateService::donateRankName)
+                .orElseGet(() -> Component.text(profile.rankDisplayName(), rankColor));
+        lines.add(pad(indent, Component.text("Ранг: ", NamedTextColor.GRAY).append(rankValue)));
         lines.add(pad(indent, Component.text("Клан: ", NamedTextColor.GRAY)
                 .append(Component.text(profile.clanDisplay(), NamedTextColor.WHITE))));
         lines.add(pad(indent, Component.text("Монет: ", NamedTextColor.GRAY)
@@ -56,7 +73,10 @@ public final class ScoreboardService {
                 .append(Component.text(GuiItems.formatPrice(profile.tokens()), NamedTextColor.AQUA))));
         lines.add(pad(indent, Component.empty()));
 
-        applySidebar(player, indent + title, lines);
+        Scoreboard board = applySidebar(player, indent + title, lines);
+        if (syncNametags) {
+            nameTags.syncAllOnBoard(board);
+        }
     }
 
     private static Component pad(String indent, Component line) {
@@ -71,12 +91,14 @@ public final class ScoreboardService {
         player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
     }
 
-    private void applySidebar(Player player, String title, List<Component> lines) {
+    private Scoreboard applySidebar(Player player, String title, List<Component> lines) {
         Scoreboard board = boards.computeIfAbsent(player.getUniqueId(), id ->
                 Bukkit.getScoreboardManager().getNewScoreboard());
 
         for (Team team : new ArrayList<>(board.getTeams())) {
-            team.unregister();
+            if (team.getName().startsWith("pve")) {
+                team.unregister();
+            }
         }
         Objective old = board.getObjective("pve_sb");
         if (old != null) {
@@ -103,6 +125,7 @@ public final class ScoreboardService {
         }
 
         player.setScoreboard(board);
+        return board;
     }
 
     private static String uniqueEntry(int index) {

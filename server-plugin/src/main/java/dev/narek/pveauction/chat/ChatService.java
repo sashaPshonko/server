@@ -1,6 +1,8 @@
 package dev.narek.pveauction.chat;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.donate.DonateService;
+import dev.narek.pveauction.model.PlayerDonate;
 import dev.narek.pveauction.model.PlayerProfile;
 import dev.narek.pveauction.util.RankColors;
 import net.kyori.adventure.text.Component;
@@ -8,6 +10,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+
+import java.util.Optional;
 
 public final class ChatService {
 
@@ -21,18 +25,24 @@ public final class ChatService {
         return plugin.getConfig().getInt("chat.local-radius", 100);
     }
 
-    public Component formatLine(PlayerProfile profile, String playerName, boolean global, String message) {
-        NamedTextColor textColor = global ? NamedTextColor.GRAY : RankColors.parse(profile.rankColor());
-        return rankTag(profile)
+    public Component formatLine(
+            PlayerProfile profile,
+            Optional<PlayerDonate> primaryDonate,
+            String playerName,
+            boolean global,
+            String message
+    ) {
+        NamedTextColor textColor = global
+                ? NamedTextColor.GRAY
+                : NamedTextColor.GREEN;
+        return chatPrefix(profile, primaryDonate)
                 .append(Component.text(playerName, NamedTextColor.WHITE, TextDecoration.BOLD))
                 .append(Component.text(": ", NamedTextColor.DARK_GRAY))
                 .append(Component.text(message, textColor));
     }
 
-    /** Тело сообщения для {@link dev.narek.pveauction.util.Msg#clan}. */
-    public Component formatClanChatBody(PlayerProfile profile, ClanMemberParts parts, String message) {
-        Component body = Component.text(parts.clanName() + " ", NamedTextColor.AQUA, TextDecoration.BOLD)
-                .append(rankTag(profile));
+    public Component formatClanChatBody(ClanMemberParts parts, String message) {
+        Component body = Component.empty();
         if (parts.owner()) {
             body = body.append(Component.text("★ ", NamedTextColor.GOLD, TextDecoration.BOLD));
         }
@@ -41,6 +51,14 @@ public final class ChatService {
                         TextDecoration.BOLD))
                 .append(Component.text(": ", NamedTextColor.DARK_GRAY))
                 .append(Component.text(message, NamedTextColor.WHITE));
+    }
+
+    /** Действующий донат (высший приоритет) или зелёный [Игрок]. */
+    public static Component chatPrefix(PlayerProfile profile, Optional<PlayerDonate> primaryDonate) {
+        if (primaryDonate.isPresent()) {
+            return DonateService.donateTag(primaryDonate.get());
+        }
+        return rankTag(profile);
     }
 
     public static Component rankTag(PlayerProfile profile) {
@@ -65,5 +83,5 @@ public final class ChatService {
         }
     }
 
-    public record ClanMemberParts(String clanName, String playerName, boolean owner) {}
+    public record ClanMemberParts(String playerName, boolean owner) {}
 }

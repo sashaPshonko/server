@@ -5,6 +5,10 @@ scoreboard:
   indent: "  "
   update-ticks: 40
 
+# Над головой: [Донат] Ник или [Игрок] Ник (цвет как в чате)
+nametag:
+  enabled: true
+
 # Чат: локальный радиус (блоки), мировой — сообщение с «!» в начале
 chat:
   enabled: true
@@ -19,7 +23,8 @@ shop:
   level-base-coins: 50
   bonus-per-level: 0.1
 
-# Макс. активных лотов на одного игрока
+# Лотов на АХ: база 5; с донатом = 5 + уровень (герцог 6, горбатый 7, … готка 16)
+# В игре один донат — самый высокий из не истёкших в БД
 max-active-lots: 5
 
 # Перевыставить в хранилище (секунды)
@@ -33,6 +38,20 @@ auction-max-price: 100000000
 
 # Максимальная сумма перевода и операций с казной клана
 money-max-amount: 100000000
+
+# Авторизация перед спавном (сессия по IP, пока IP не сменился)
+auth:
+  enabled: true
+  min-password-length: 4
+  max-password-length: 32
+  # Временная точка входа (потом отдельный мир — поменяй world/x/y/z)
+  location:
+    world: world
+    x: 0.5
+    y: -21
+    z: 0.5
+    yaw: 0
+    pitch: 0
 
 # --- Миры: спавн (карта) и RTP (обычный выживание 1000×1000) ---
 spawn-world: world
@@ -64,13 +83,39 @@ spawn-rtp-cooldown-ticks: 40
 
 rtp-success-message: "Телепорт в случайное место мира."
 
+# Замедленное падение при /rtp и прыжке в яму на спавне (секунды, 0 = выкл)
+rtp-slow-falling-seconds: 25
+
+# /tp <ник> — запрос телепорта к игроку (принять кнопкой в чате)
+tp-request-timeout-seconds: 30
+
 # Экран загрузки при переходе в другой мир (спавн ↔ RTP)
 loading-title: "Загрузка"
 loading-subtitle: "Переход в другой мир…"
 loading-min-ms: 600
 
 # На спавне /rtp запрещён — только яма (Y < spawn-rtp-trigger-y)
+# Режим выживания; ломать/ставить блоки нельзя (кроме отмычек). Админы: pveauction.spawn.bypass
 spawn-always-night: true
 
 # Дроп на спавне удаляется, если лежит дольше N секунд (0 = выключить)
 spawn-item-despawn-seconds: 60
+
+# Торгаш на спавне (ПКМ — магазин отмычек за серебро)
+trader:
+  enabled: true
+  villager-type: PLAINS
+  look-range: 16
+  look-interval-ticks: 5
+  location:
+    world: world
+    x: -4.5
+    y: -21
+    z: -7.5
+    yaw: 90
+  prices:
+    spheres: 12
+    weapons: 20
+    armor: 18
+    tools: 15
+    enchantments: 25

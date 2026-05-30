@@ -64,12 +64,12 @@ public final class AhCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            int max = plugin.maxActiveLots();
             ItemStack toStore = hand.clone();
             hand.setAmount(0);
 
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
                 try {
+                    int max = plugin.maxActiveLots(player.getUniqueId());
                     int active = plugin.lots().countUnsoldBySeller(player.getUniqueId());
                     if (active >= max) {
                         runSync(player, () -> {

@@ -1,8 +1,12 @@
 package dev.narek.pveauction.gui;
 
 import dev.narek.pveauction.PveAuctionPlugin;
+import dev.narek.pveauction.item.ItemDisplayNames;
 import dev.narek.pveauction.model.AuctionLot;
 import dev.narek.pveauction.util.Msg;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,6 +19,7 @@ import org.bukkit.inventory.ItemStack;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class GuiListener implements Listener {
 
@@ -262,10 +267,22 @@ public final class GuiListener implements Listener {
                 }
 
                 ItemStack item = plugin.lots().bytesToItem(lot.itemBlob());
+                String itemLabel = ItemDisplayNames.describe(plugin, item);
+                long priceLong = (long) price;
+                UUID sellerUuid = lot.sellerUuid();
                 runSync(buyer, () -> {
                     giveItem(buyer, item);
-                    Msg.send(buyer, Msg.ok("Куплено за ").append(Msg.money((long) price)));
+                    Msg.send(buyer, Msg.ok("Куплено за ").append(Msg.money(priceLong)));
                     refreshOpenMenu(buyer);
+                    plugin.scoreboardListener().refreshCoins(buyer);
+                    Player seller = plugin.getServer().getPlayer(sellerUuid);
+                    if (seller != null && seller.isOnline()) {
+                        plugin.scoreboardListener().refreshCoins(seller);
+                        Msg.auction(seller, Msg.info("У вас купили ")
+                                .append(Component.text(itemLabel, NamedTextColor.WHITE, TextDecoration.BOLD))
+                                .append(Msg.info(" за "))
+                                .append(Msg.money(priceLong)));
+                    }
                 });
             } catch (SQLException e) {
                 plugin.getLogger().severe(e.getMessage());
@@ -282,6 +299,7 @@ public final class GuiListener implements Listener {
         if (plugin.economy().deposit(target, amount)) {
             Msg.send(admin, Msg.ok("Выдано ").append(Msg.money(amount))
                     .append(Msg.ok(" → " + target.getName())));
+            plugin.scoreboardListener().refreshCoins(target);
         } else {
             Msg.send(admin, Msg.err("Не удалось выдать деньги."));
         }

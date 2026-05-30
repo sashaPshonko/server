@@ -80,6 +80,7 @@ public final class PayCommand implements CommandExecutor, TabCompleter {
                 .append(Msg.ok(" → " + target.getName())));
         Msg.pay(target, Msg.info("Получено ").append(Msg.money(amount))
                 .append(Msg.info(" от " + player.getName())));
+        plugin.scoreboardListener().refreshCoins(player, target);
         return true;
     }
 

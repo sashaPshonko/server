@@ -24,37 +24,40 @@ public final class AhAdminCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!sender.hasPermission("pveauction.admin")) {
-            Msg.send(sender, Msg.err("Нет прав администратора."));
+            Msg.server(sender, Msg.err("Нет прав администратора."));
             return true;
         }
 
         if (args.length >= 3 && args[0].equalsIgnoreCase("give")) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
-                Msg.send(sender, Msg.err("Игрок не в сети."));
+                Msg.server(sender, Msg.err("Игрок не в сети."));
                 return true;
             }
             double amount;
             try {
                 amount = Double.parseDouble(args[2].replace(" ", "").replace("_", ""));
             } catch (NumberFormatException e) {
-                Msg.send(sender, Msg.err("Сумма: /admin give <ник> <число>"));
+                Msg.server(sender, Msg.err("Сумма: /admin give <ник> <число>"));
                 return true;
             }
             if (amount <= 0) {
-                Msg.send(sender, Msg.err("Сумма должна быть больше нуля."));
+                Msg.server(sender, Msg.err("Сумма должна быть больше нуля."));
                 return true;
             }
             if (!plugin.economy().isEnabled()) {
-                Msg.send(sender, Msg.err("Экономика не подключена (Vault + Essentials)."));
+                Msg.server(sender, Msg.err("Экономика не подключена (Vault + Essentials)."));
                 return true;
             }
             if (plugin.economy().deposit(target, amount)) {
-                Msg.send(sender, Msg.ok("Выдано ")
+                Msg.server(sender, Msg.ok("Выдано ")
                         .append(Msg.money(amount))
                         .append(Msg.ok(" → " + target.getName())));
+                if (target.isOnline() && plugin.scoreboardListener() != null) {
+                    plugin.scoreboardListener().refreshCoins(target);
+                }
             } else {
-                Msg.send(sender, Msg.err("Не удалось выдать деньги."));
+                Msg.server(sender, Msg.err("Не удалось выдать деньги."));
             }
             return true;
         }

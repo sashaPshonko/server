@@ -34,8 +34,35 @@ commands:
   shop:
     description: Магазин и скупка
     usage: /shop
+  givesilver:
+    description: Выдать серебро (валюта торгаша)
+    usage: /givesilver give <ник> <кол-во>
+  tpa:
+    description: Запрос телепорта к игроку (не путать с Essentials /tp)
+    usage: /tpa <ник>
+    aliases: [tpreq]
+  tpaccept:
+    description: Принять запрос телепорта
+    usage: /tpaccept
+  tpdeny:
+    description: Отклонить запрос телепорта
+    usage: /tpdeny
+  donate:
+    description: Выдача донатов
+    usage: /donate give <ник> <донат> <дней|forever>
+  register:
+    description: Регистрация пароля
+    usage: /reg <пароль>
+    aliases: [reg]
+  login:
+    description: Вход по паролю
+    usage: /login <пароль>
+    aliases: [l]
 
 permissions:
+  pveauction.auth.bypass:
+    description: Пропуск /reg и /login (тесты, модераторы)
+    default: false
   pveauction.use:
     description: Аукцион и продажа
     default: true
@@ -63,3 +90,9 @@ permissions:
   pveauction.shop:
     description: /shop
     default: true
+  pveauction.tpa:
+    description: /tpa — запрос телепорта к игроку
+    default: true
+  pveauction.donate.admin:
+    description: /donate — выдача донатов
+    default: op

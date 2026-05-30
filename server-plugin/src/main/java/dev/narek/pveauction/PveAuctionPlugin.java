@@ -1,6 +1,11 @@
 package dev.narek.pveauction;
 
+import dev.narek.pveauction.auth.AuthRepository;
+import dev.narek.pveauction.auth.AuthService;
 import dev.narek.pveauction.chat.ChatService;
+import dev.narek.pveauction.command.LoginCommand;
+import dev.narek.pveauction.command.RegisterCommand;
+import dev.narek.pveauction.listener.AuthListener;
 import dev.narek.pveauction.clan.ClanService;
 import dev.narek.pveauction.listener.ChatListener;
 import dev.narek.pveauction.command.AhAdminCommand;
@@ -10,8 +15,19 @@ import dev.narek.pveauction.command.HomeCommand;
 import dev.narek.pveauction.command.PayCommand;
 import dev.narek.pveauction.command.RtpCommand;
 import dev.narek.pveauction.command.SetHomeCommand;
+import dev.narek.pveauction.command.DonateCommand;
+import dev.narek.pveauction.command.GiveSilverCommand;
+import dev.narek.pveauction.db.DonateRepository;
+import dev.narek.pveauction.donate.DonateService;
 import dev.narek.pveauction.command.ShopCommand;
 import dev.narek.pveauction.command.SpawnCommand;
+import dev.narek.pveauction.command.TpAcceptCommand;
+import dev.narek.pveauction.command.TpCommand;
+import dev.narek.pveauction.command.TpDenyCommand;
+import dev.narek.pveauction.gui.trader.TraderGuiListener;
+import dev.narek.pveauction.listener.StorageKeyListener;
+import dev.narek.pveauction.listener.TraderNpcListener;
+import dev.narek.pveauction.trader.TraderNpcService;
 import dev.narek.pveauction.db.ClanRepository;
 import dev.narek.pveauction.db.ShopRepository;
 import dev.narek.pveauction.gui.shop.ShopGuiListener;
@@ -21,6 +37,7 @@ import dev.narek.pveauction.db.LotRepository;
 import dev.narek.pveauction.db.PlayerRepository;
 import dev.narek.pveauction.gui.clan.ClanGuiListener;
 import dev.narek.pveauction.listener.ScoreboardListener;
+import dev.narek.pveauction.nametag.NameTagService;
 import dev.narek.pveauction.scoreboard.ScoreboardService;
 import dev.narek.pveauction.economy.EconomyService;
 import dev.narek.pveauction.economy.EconomyHookListener;
@@ -28,6 +45,8 @@ import dev.narek.pveauction.gui.GuiListener;
 import dev.narek.pveauction.listener.CommandWhitelistListener;
 import dev.narek.pveauction.listener.SpawnItemCleanupTask;
 import dev.narek.pveauction.listener.SpawnWorldListener;
+import dev.narek.pveauction.listener.TpRequestListener;
+import dev.narek.pveauction.travel.TeleportRequestService;
 import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -48,6 +67,13 @@ public final class PveAuctionPlugin extends JavaPlugin {
     private WorldTravelService worldTravelService;
     private ScoreboardService scoreboardService;
     private ScoreboardListener scoreboardListener;
+    private NameTagService nameTagService;
+    private TraderNpcService traderNpcService;
+    private TeleportRequestService teleportRequestService;
+    private DonateRepository donateRepository;
+    private DonateService donateService;
+    private AuthRepository authRepository;
+    private AuthService authService;
     private final Map<UUID, Long> lastRelistAt = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastAuctionPage = new ConcurrentHashMap<>();
 
@@ -65,6 +91,20 @@ public final class PveAuctionPlugin extends JavaPlugin {
         playerRepository = new PlayerRepository(this);
         playerRepository.init();
 
+        authRepository = new AuthRepository(this);
+        authRepository.init();
+        authService = new AuthService(this, authRepository);
+
+        donateRepository = new DonateRepository(this);
+        donateRepository.init();
+        donateService = new DonateService(this, donateRepository);
+        getServer().getScheduler().runTaskTimerAsynchronously(
+                this,
+                donateService::purgeExpiredAndRefresh,
+                20L * 60,
+                20L * 60
+        );
+
         clanRepository = new ClanRepository(this);
         clanRepository.init();
         clanService = new ClanService(this, clanRepository);
@@ -74,8 +114,9 @@ public final class PveAuctionPlugin extends JavaPlugin {
         shopRepository.init();
         shopService = new ShopService(this, shopRepository);
 
-        scoreboardService = new ScoreboardService(this);
-        scoreboardListener = new ScoreboardListener(this, scoreboardService);
+        nameTagService = new NameTagService(this);
+        scoreboardService = new ScoreboardService(this, nameTagService);
+        scoreboardListener = new ScoreboardListener(this, scoreboardService, nameTagService);
 
         worldTravelService = new WorldTravelService(this);
         worldTravelService.ensureRtpWorld();
@@ -96,14 +137,21 @@ public final class PveAuctionPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new ClanGuiListener(this, clanService), this);
-        getServer().getPluginManager().registerEvents(new CommandWhitelistListener(), this);
+        getServer().getPluginManager().registerEvents(new CommandWhitelistListener(authService), this);
+        getServer().getPluginManager().registerEvents(new AuthListener(this, authService), this);
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
+
+        teleportRequestService = new TeleportRequestService(this);
+        getServer().getPluginManager().registerEvents(new TpRequestListener(teleportRequestService), this);
         getServer().getPluginManager().registerEvents(scoreboardListener, this);
         getServer().getPluginManager().registerEvents(new ChatListener(this, chatService), this);
         getServer().getPluginManager().registerEvents(new ShopGuiListener(this, shopService), this);
 
-        long sbTicks = getConfig().getLong("scoreboard.update-ticks", 40L);
-        getServer().getScheduler().runTaskTimer(this, scoreboardListener::refreshAll, sbTicks, sbTicks);
+        traderNpcService = new TraderNpcService(this);
+        traderNpcService.start();
+        getServer().getPluginManager().registerEvents(new TraderNpcListener(this, traderNpcService), this);
+        getServer().getPluginManager().registerEvents(new TraderGuiListener(this), this);
+        getServer().getPluginManager().registerEvents(new StorageKeyListener(this), this);
 
         var ah = new AhCommand(this);
         var ahCmd = getCommand("ah");
@@ -129,6 +177,21 @@ public final class PveAuctionPlugin extends JavaPlugin {
             spawnCmd.setExecutor(new SpawnCommand(this));
         }
 
+        var tpaCmd = getCommand("tpa");
+        if (tpaCmd != null) {
+            TpCommand tp = new TpCommand(this, teleportRequestService);
+            tpaCmd.setExecutor(tp);
+            tpaCmd.setTabCompleter(tp);
+        }
+        var tpAcceptCmd = getCommand("tpaccept");
+        if (tpAcceptCmd != null) {
+            tpAcceptCmd.setExecutor(new TpAcceptCommand(teleportRequestService));
+        }
+        var tpDenyCmd = getCommand("tpdeny");
+        if (tpDenyCmd != null) {
+            tpDenyCmd.setExecutor(new TpDenyCommand(teleportRequestService));
+        }
+
         registerCmd("sethome", new SetHomeCommand(this, clanService, worldTravelService));
         registerCmd("home", new HomeCommand(this, clanService));
         var payCmd = getCommand("pay");
@@ -143,14 +206,41 @@ public final class PveAuctionPlugin extends JavaPlugin {
         }
 
         registerCmd("shop", new ShopCommand());
-        getLogger().info("PveAuction v" + getDescription().getVersion()
-                + " — скупка, раскладка " + ShopSellMenu.LAYOUT_BUILD);
 
-        getLogger().info("PveAuction: аукцион, кланы, магазин, /pay; лимит " + maxActiveLots() + " лотов.");
+        var regCmd = getCommand("register");
+        if (regCmd != null) {
+            regCmd.setExecutor(new RegisterCommand(authService));
+        }
+        var loginCmd = getCommand("login");
+        if (loginCmd != null) {
+            loginCmd.setExecutor(new LoginCommand(authService));
+        }
+        var giveSilver = new GiveSilverCommand(this);
+        var giveSilverCmd = getCommand("givesilver");
+        if (giveSilverCmd != null) {
+            giveSilverCmd.setExecutor(giveSilver);
+            giveSilverCmd.setTabCompleter(giveSilver);
+        }
+
+        var donateCmd = new DonateCommand(this, donateService);
+        var donate = getCommand("donate");
+        if (donate != null) {
+            donate.setExecutor(donateCmd);
+            donate.setTabCompleter(donateCmd);
+        }
+
+        getLogger().info("PveAuction v" + getDescription().getVersion()
+                + " — скупка, раскладка " + ShopSellMenu.LAYOUT_BUILD
+                + " | auth=" + getConfig().getBoolean("auth.enabled", true));
+
+        getLogger().info("PveAuction: аукцион, кланы, донаты, /pay; база лотов " + maxActiveLotsBase() + "+донат.");
     }
 
     @Override
     public void onDisable() {
+        if (traderNpcService != null) {
+            traderNpcService.stop();
+        }
         if (lotRepository != null) {
             lotRepository.close();
         }
@@ -163,6 +253,16 @@ public final class PveAuctionPlugin extends JavaPlugin {
         if (shopRepository != null) {
             shopRepository.close();
         }
+        if (donateRepository != null) {
+            donateRepository.close();
+        }
+        if (authRepository != null) {
+            authRepository.close();
+        }
+    }
+
+    public AuthService auth() {
+        return authService;
     }
 
     public ShopService shop() {
@@ -208,8 +308,16 @@ public final class PveAuctionPlugin extends JavaPlugin {
         return economyService;
     }
 
-    public int maxActiveLots() {
+    public int maxActiveLotsBase() {
         return getConfig().getInt("max-active-lots", 5);
+    }
+
+    public int maxActiveLots(java.util.UUID playerId) throws java.sql.SQLException {
+        return donateService.maxActiveLots(playerId);
+    }
+
+    public DonateService donates() {
+        return donateService;
     }
 
     public long auctionExpiryMs() {

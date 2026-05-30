@@ -52,7 +52,8 @@ public final class StorageMenu implements InventoryHolder {
 
         List<AuctionLot> lots;
         try {
-            lots = plugin.lots().listUnsoldBySeller(viewer.getUniqueId(), plugin.maxActiveLots());
+            int maxLots = plugin.maxActiveLots(viewer.getUniqueId());
+            lots = plugin.lots().listUnsoldBySeller(viewer.getUniqueId(), maxLots);
         } catch (SQLException e) {
             plugin.getLogger().severe("Не загрузить хранилище: " + e.getMessage());
             lots = List.of();

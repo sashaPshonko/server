@@ -104,7 +104,12 @@ public final class AuctionMenu implements InventoryHolder {
         } catch (SQLException e) {
             unsold = 0;
         }
-        int max = plugin.maxActiveLots();
+        int max;
+        try {
+            max = plugin.maxActiveLots(viewer.getUniqueId());
+        } catch (SQLException e) {
+            max = plugin.maxActiveLotsBase();
+        }
         inventory.setItem(SLOT_STORAGE, GuiItems.button(Material.CHEST,
                 Component.text("ХРАНИЛИЩЕ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD),
                 Component.text("Твои лоты: " + unsold + "/" + max, NamedTextColor.AQUA)));

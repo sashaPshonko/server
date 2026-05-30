@@ -1,27 +1,27 @@
 package dev.narek.pveauction.listener;
 
 import dev.narek.pveauction.PveAuctionPlugin;
-import dev.narek.pveauction.model.SavedLocation;
+import dev.narek.pveauction.item.CustomItems;
 import dev.narek.pveauction.world.RtpTeleportHelper;
-import dev.narek.pveauction.world.WorldTeleportService;
+import dev.narek.pveauction.world.TravelEffects;
 import dev.narek.pveauction.world.WorldTravelService;
-import org.bukkit.Location;
+import org.bukkit.entity.Endermite;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -36,67 +36,10 @@ public final class SpawnWorldListener implements Listener {
         this.worlds = plugin.worlds();
     }
 
+    /** Телепорт на спавн/сохранённую точку — только после авторизации (см. AuthService). */
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                if (!player.isOnline()) {
-                    return;
-                }
-                worlds.refreshLocations();
-                teleportOnJoin(player);
-            }
-        }.runTaskLater(plugin, 5L);
-    }
-
-    private void teleportOnJoin(Player player) {
-        boolean saveLogout = plugin.getConfig().getBoolean("save-logout-location", true);
-
-        if (saveLogout) {
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-                try {
-                    plugin.players().getOrCreate(player.getUniqueId(), player.getName());
-                    Optional<SavedLocation> saved = plugin.players().findLogoutLocation(player.getUniqueId());
-                    plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!player.isOnline()) {
-                            return;
-                        }
-                        if (saved.isPresent()) {
-                            Location target = saved.get().toLocation();
-                            if (target != null) {
-                                WorldTeleportService.teleport(plugin, player, target, ok -> applyWorldRules(player));
-                                return;
-                            }
-                        }
-                        teleportFirstJoin(player);
-                    });
-                } catch (SQLException e) {
-                    plugin.getLogger().severe("Позиция при входе: " + e.getMessage());
-                    plugin.getServer().getScheduler().runTask(plugin, () -> teleportFirstJoin(player));
-                }
-            });
-            return;
-        }
-
-        teleportFirstJoin(player);
-    }
-
-    private void teleportFirstJoin(Player player) {
-        if (plugin.getConfig().getBoolean("teleport-to-spawn-on-join", true)) {
-            WorldTeleportService.teleport(plugin, player, worlds.spawnLocation(), ok -> applyWorldRules(player));
-        } else {
-            applyWorldRules(player);
-        }
-    }
-
-    private void applyWorldRules(Player player) {
-        if (worlds.isSpawnWorld(player.getWorld())) {
-            worlds.applySpawnRules(player);
-        } else if (worlds.isRtpWorld(player.getWorld())) {
-            worlds.applyRtpRules(player);
-        }
+        // JoinTeleportService вызывается из AuthService после /login|/reg или сессии по IP.
     }
 
     @EventHandler
@@ -113,8 +56,23 @@ public final class SpawnWorldListener implements Listener {
         }.runTask(plugin);
     }
 
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        if (plugin.auth() != null && !plugin.auth().isLoggedIn(event.getPlayer())) {
+            return;
+        }
+        var spawn = worlds.spawnLocation();
+        if (spawn.getWorld() != null) {
+            event.setRespawnLocation(spawn);
+        }
+        plugin.getServer().getScheduler().runTask(plugin, () -> applyWorldRules(event.getPlayer()));
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMove(PlayerMoveEvent event) {
+        if (plugin.auth() != null && !plugin.auth().isLoggedIn(event.getPlayer())) {
+            return;
+        }
         if (!event.hasChangedPosition()) {
             return;
         }
@@ -126,6 +84,7 @@ public final class SpawnWorldListener implements Listener {
             return;
         }
         rtpCooldown.add(player.getUniqueId());
+        TravelEffects.applyRtpSlowFalling(plugin, player);
         RtpTeleportHelper.teleportRandom(plugin, worlds, player);
         plugin.getServer().getScheduler().runTaskLater(
                 plugin,
@@ -139,18 +98,22 @@ public final class SpawnWorldListener implements Listener {
         Player player = event.getPlayer();
         rtpCooldown.remove(player.getUniqueId());
 
+        if (plugin.auth() != null && !plugin.auth().isLoggedIn(player)) {
+            return;
+        }
+
         if (!plugin.getConfig().getBoolean("save-logout-location", true)) {
             return;
         }
 
-        Location location = player.getLocation().clone();
+        var location = player.getLocation().clone();
         UUID uuid = player.getUniqueId();
         String name = player.getName();
         plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 plugin.players().getOrCreate(uuid, name);
                 plugin.players().saveLogoutLocation(uuid, location);
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 plugin.getLogger().severe("Сохранение позиции: " + e.getMessage());
             }
         });
@@ -175,7 +138,23 @@ public final class SpawnWorldListener implements Listener {
         if (canBypass(event.getPlayer())) {
             return;
         }
+        if (CustomItems.keyType(plugin, event.getItemInHand()) != null) {
+            return;
+        }
         event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEndermiteSpawn(CreatureSpawnEvent event) {
+        if (!(event.getEntity() instanceof Endermite)) {
+            return;
+        }
+        if (!worlds.isSpawnWorld(event.getLocation().getWorld())) {
+            return;
+        }
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.ENDER_PEARL) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -193,6 +172,15 @@ public final class SpawnWorldListener implements Listener {
     }
 
     private boolean canBypass(Player player) {
-        return player.hasPermission("pveauction.spawn.bypass");
+        return player.hasPermission("pveauction.spawn.bypass")
+                || player.hasPermission("pveauction.admin");
+    }
+
+    private void applyWorldRules(Player player) {
+        if (worlds.isSpawnWorld(player.getWorld())) {
+            worlds.applySpawnRules(player);
+        } else if (worlds.isRtpWorld(player.getWorld())) {
+            worlds.applyRtpRules(player);
+        }
     }
 }

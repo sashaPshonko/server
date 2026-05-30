@@ -187,8 +187,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         clans.runAsync(player, ok -> {}, () -> {
             ClanMember member = requireMember(player);
             ClanData clan = clans.repo().findClan(member.clanId()).orElseThrow();
-            var profile = plugin.players().getOrCreate(player.getUniqueId(), player.getName());
-            clans.runSync(player, () -> clans.sendClanChat(player, member, clan, profile, message));
+            clans.runSync(player, () -> clans.sendClanChat(player, member, clan, message));
         });
         return true;
     }
@@ -254,7 +253,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         long amount = parsed.amount();
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.clan(player, Msg.ok("Вложено в клан ").append(Msg.money(amount)));
+                plugin.scoreboardListener().refreshCoins(player);
             }
         }, () -> {
             ClanMember member = requireMember(player);
@@ -265,10 +264,9 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
                 throw new IllegalStateException("Не удалось списать деньги.");
             }
             clans.repo().addBalance(member.clanId(), amount);
-            String name = player.getName();
             int clanId = member.clanId();
-            clans.notifyClan(clanId, player.getUniqueId(),
-                    Msg.info(name + " вложил в казну ").append(Msg.money(amount)));
+            clans.notifyClanAll(clanId,
+                    ClanService.memberAction(player.getName(), " вложил в казну ", amount, false));
         });
         return true;
     }
@@ -291,7 +289,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         long amount = parsed.amount();
         clans.runAsync(player, ok -> {
             if (ok) {
-                Msg.clan(player, Msg.ok("Снято из клана ").append(Msg.money(amount)));
+                plugin.scoreboardListener().refreshCoins(player);
             }
         }, () -> {
             ClanMember member = requireMember(player);
@@ -309,10 +307,9 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
                 clans.repo().addBalance(member.clanId(), amount);
                 throw new IllegalStateException("Не удалось выдать деньги.");
             }
-            String name = player.getName();
             int clanId = member.clanId();
-            clans.notifyClan(clanId, player.getUniqueId(),
-                    Msg.warn(name + " снял из казны ").append(Msg.money(amount)));
+            clans.notifyClanAll(clanId,
+                    ClanService.memberAction(player.getName(), " снял из казны ", amount, true));
         });
         return true;
     }

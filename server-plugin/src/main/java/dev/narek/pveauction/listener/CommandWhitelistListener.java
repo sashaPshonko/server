@@ -1,5 +1,6 @@
 package dev.narek.pveauction.listener;
 
+import dev.narek.pveauction.auth.AuthService;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,11 +13,22 @@ public final class CommandWhitelistListener implements Listener {
 
     private static final Set<String> ALLOWED = Set.of(
             "ah", "admin", "rtp", "spawn",
-            "sethome", "home", "pay", "clan", "shop"
+            "sethome", "home", "pay", "clan", "shop",
+            "tpa", "tpreq", "tpaccept", "tpdeny",
+            "register", "reg", "login", "l"
     );
+
+    private final AuthService auth;
+
+    public CommandWhitelistListener(AuthService auth) {
+        this.auth = auth;
+    }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onCommand(PlayerCommandPreprocessEvent event) {
+        if (!auth.isLoggedIn(event.getPlayer())) {
+            return;
+        }
         if (event.getPlayer().isOp() || event.getPlayer().hasPermission("pveauction.admin")) {
             return;
         }

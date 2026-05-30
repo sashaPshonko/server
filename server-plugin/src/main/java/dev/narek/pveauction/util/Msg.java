@@ -13,6 +13,8 @@ public final class Msg {
     private static final Component PREFIX_PAY = prefix("ПЕРЕВОД", NamedTextColor.GREEN);
     private static final Component PREFIX_SERVER = prefix("4NAREK", NamedTextColor.YELLOW);
     private static final Component PREFIX_SHOP = prefix("СКУПКА", NamedTextColor.GREEN);
+    private static final Component PREFIX_TP = prefix("ТЕЛЕПОРТ", NamedTextColor.LIGHT_PURPLE);
+    private static final Component PREFIX_DONATE = prefix("ДОНАТ", NamedTextColor.GOLD);
 
     private Msg() {}
 
@@ -43,16 +45,45 @@ public final class Msg {
         player.sendMessage(PREFIX_SERVER.append(body));
     }
 
+    public static void server(CommandSender sender, Component body) {
+        if (sender instanceof Player player) {
+            server(player, body);
+        } else {
+            sender.sendMessage(PREFIX_SERVER.append(body));
+        }
+    }
+
     public static void shop(Player player, Component body) {
         player.sendMessage(PREFIX_SHOP.append(body));
     }
 
+    public static void tp(Player player, Component body) {
+        player.sendMessage(PREFIX_TP.append(body));
+    }
+
+    public static Component prefixTp() {
+        return PREFIX_TP;
+    }
+
+    /** Только аукцион (/ah, лоты). Не использовать для донатов и прочего. */
     public static void send(CommandSender sender, Component body) {
         if (sender instanceof Player player) {
             auction(player, body);
         } else {
-            sender.sendMessage(Component.text("[Аукцион] ").append(body));
+            sender.sendMessage(PREFIX_AUCTION.append(body));
         }
+    }
+
+    public static void donate(CommandSender sender, Component body) {
+        if (sender instanceof Player player) {
+            player.sendMessage(PREFIX_DONATE.append(body));
+        } else {
+            sender.sendMessage(Component.text("[Донат] ").append(body));
+        }
+    }
+
+    public static void donate(Player player, Component body) {
+        player.sendMessage(PREFIX_DONATE.append(body));
     }
 
     public static Component ok(String text) {
@@ -61,6 +92,10 @@ public final class Msg {
 
     public static Component info(String text) {
         return Component.text(text, NamedTextColor.AQUA);
+    }
+
+    public static Component colored(String text, String colorKey) {
+        return Component.text(text, RankColors.parse(colorKey));
     }
 
     public static Component warn(String text) {

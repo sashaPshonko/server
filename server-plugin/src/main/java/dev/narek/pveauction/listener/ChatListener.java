@@ -30,9 +30,13 @@ public final class ChatListener implements Listener {
         if (!plugin.getConfig().getBoolean("chat.enabled", true)) {
             return;
         }
+        Player player = event.getPlayer();
+        if (plugin.auth() != null && !plugin.auth().isLoggedIn(player)) {
+            event.setCancelled(true);
+            return;
+        }
 
         event.setCancelled(true);
-        Player player = event.getPlayer();
         String raw = PLAIN.serialize(event.message()).trim();
         if (raw.isEmpty()) {
             return;
@@ -48,8 +52,9 @@ public final class ChatListener implements Listener {
 
         try {
             PlayerProfile profile = plugin.players().getOrCreate(player.getUniqueId(), player.getName());
+            var primary = plugin.donates().primaryActive(player.getUniqueId());
             String name = player.getName();
-            var line = chat.formatLine(profile, name, global, text);
+            var line = chat.formatLine(profile, primary, name, global, text);
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 if (!player.isOnline()) {
                     return;

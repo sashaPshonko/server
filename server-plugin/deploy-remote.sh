@@ -27,8 +27,6 @@ echo "JAR: ${JAR} (${JAR_NAME})"
 echo "VPS: ${REMOTE}:${REMOTE_DIR}/"
 echo ""
 
-scp -o StrictHostKeyChecking=accept-new "${JAR}" "${REMOTE}:${REMOTE_DIR}/"
-
 ssh "${REMOTE}" bash -s -- "${REMOTE_DIR}" "${SERVER_DIR}" "${JAR_NAME}" <<'REMOTE_SCRIPT'
 set -euo pipefail
 PLUGINS="$1"
@@ -37,6 +35,15 @@ JAR_NAME="$3"
 
 rm -rf "${PLUGINS}/.paper-remapped"
 rm -f "${PLUGINS}"/PveAuction.jar "${PLUGINS}"/PveAuction-*.jar 2>/dev/null || true
+REMOTE_SCRIPT
+
+scp -o StrictHostKeyChecking=accept-new "${JAR}" "${REMOTE}:${REMOTE_DIR}/"
+
+ssh "${REMOTE}" bash -s -- "${REMOTE_DIR}" "${SERVER_DIR}" "${JAR_NAME}" <<'REMOTE_SCRIPT'
+set -euo pipefail
+PLUGINS="$1"
+SERVER="$2"
+JAR_NAME="$3"
 
 echo "=== JAR на VPS ==="
 ls -la "${PLUGINS}"/PveAuction*.jar

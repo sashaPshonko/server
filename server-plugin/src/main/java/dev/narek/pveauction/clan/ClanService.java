@@ -70,6 +70,20 @@ public final class ClanService {
         });
     }
 
+    /** Сообщение всем онлайн в клане, включая инициатора. */
+    public void notifyClanAll(int clanId, Component body) {
+        notifyClan(clanId, null, body);
+    }
+
+    public static Component memberAction(String playerName, String actionText, long amount, boolean warn) {
+        Component action = warn
+                ? Msg.warn(actionText)
+                : Msg.info(actionText);
+        return Component.text(playerName, NamedTextColor.WHITE, TextDecoration.BOLD)
+                .append(action)
+                .append(Msg.money(amount));
+    }
+
     public void refreshClanOnline(int clanId) {
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             try {
@@ -85,13 +99,11 @@ public final class ClanService {
         });
     }
 
-    public void sendClanChat(Player sender, ClanMember member, ClanData clan, PlayerProfile profile, String text) {
-        Component body = plugin.chat().formatClanChatBody(
-                profile,
-                new ChatService.ClanMemberParts(clan.name(), sender.getName(), member.isOwner()),
-                text);
-
+    public void sendClanChat(Player sender, ClanMember member, ClanData clan, String text) {
         try {
+            Component body = plugin.chat().formatClanChatBody(
+                    new ChatService.ClanMemberParts(sender.getName(), member.isOwner()),
+                    text);
             for (ClanMember m : clans.listMembers(clan.id())) {
                 Player online = Bukkit.getPlayer(m.playerUuid());
                 if (online != null) {

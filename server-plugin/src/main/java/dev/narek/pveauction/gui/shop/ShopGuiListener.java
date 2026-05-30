@@ -163,6 +163,7 @@ public final class ShopGuiListener implements Listener {
                 ShopService.SellResult result = shop.sell(player, cat, entryOpt.get());
                 result.send(player);
                 if (result.success()) {
+                    plugin.scoreboardListener().refreshCoins(player);
                     openSell(player, cat);
                 }
             } catch (SQLException e) {

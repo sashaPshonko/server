@@ -19,13 +19,14 @@ public final class RankColors {
             case "DARK_GREEN" -> NamedTextColor.DARK_GREEN;
             case "DARK_AQUA", "DARK_CYAN" -> NamedTextColor.DARK_AQUA;
             case "DARK_RED" -> NamedTextColor.DARK_RED;
+            case "MAROON", "BORDO", "BORDOVY" -> NamedTextColor.DARK_RED;
             case "DARK_PURPLE" -> NamedTextColor.DARK_PURPLE;
             case "GOLD", "ORANGE" -> NamedTextColor.GOLD;
             case "GRAY", "GREY" -> NamedTextColor.GRAY;
             case "DARK_GRAY", "DARK_GREY" -> NamedTextColor.DARK_GRAY;
             case "BLUE" -> NamedTextColor.BLUE;
             case "GREEN" -> NamedTextColor.GREEN;
-            case "AQUA", "CYAN" -> NamedTextColor.AQUA;
+            case "AQUA", "CYAN", "LIGHT_BLUE", "GOLUBOY" -> NamedTextColor.AQUA;
             case "RED" -> NamedTextColor.RED;
             case "LIGHT_PURPLE", "PINK", "MAGENTA" -> NamedTextColor.LIGHT_PURPLE;
             case "YELLOW" -> NamedTextColor.YELLOW;
