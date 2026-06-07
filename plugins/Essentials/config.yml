@@ -753,7 +753,7 @@ max-itemlore-lines: 10
 # Should Essentials check for updates?
 # If set to true, Essentials will show notifications when a new version is available.
 # This uses the public GitHub API and no identifying information is sent or stored.
-update-check: true
+update-check: false
 
 ############################################################
 # +------------------------------------------------------+ #

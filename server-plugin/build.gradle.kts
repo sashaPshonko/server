@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "dev.narek"
-version = "0.1.44"
+version = "0.1.76"
 
 repositories {
     mavenCentral()

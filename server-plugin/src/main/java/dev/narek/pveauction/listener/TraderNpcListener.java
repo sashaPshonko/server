@@ -22,39 +22,40 @@ public final class TraderNpcListener implements Listener {
         this.trader = trader;
     }
 
+    private void openShop(Player player) {
+        TraderShopMenu.open(plugin, player);
+    }
+
+    /** ПКМ по жителю */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInteract(PlayerInteractEntityEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
         if (!trader.isTrader(event.getRightClicked())) {
             return;
         }
         event.setCancelled(true);
-        TraderShopMenu.open(plugin, event.getPlayer());
+        openShop(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInteractAt(PlayerInteractAtEntityEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
         if (!trader.isTrader(event.getRightClicked())) {
             return;
         }
         event.setCancelled(true);
-        TraderShopMenu.open(plugin, event.getPlayer());
+        openShop(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onDamage(EntityDamageByEntityEvent event) {
+    /** ЛКМ (удар) — invulnerable мешал; урон отменяем, магазин открываем */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onAttack(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)) {
+            return;
+        }
         if (!trader.isTrader(event.getEntity())) {
             return;
         }
         event.setCancelled(true);
-        if (event.getDamager() instanceof Player player) {
-            TraderShopMenu.open(plugin, player);
-        }
+        openShop(player);
     }
 
 }

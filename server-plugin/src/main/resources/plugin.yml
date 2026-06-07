@@ -4,7 +4,7 @@ main: dev.narek.pveauction.PveAuctionPlugin
 api-version: "1.21"
 description: PvE аукцион — GUI и SQLite
 authors: [narek]
-softdepend: [Vault]
+softdepend: [Vault, FastAsyncWorldEdit, WorldEdit]
 
 commands:
   ah:
@@ -58,6 +58,18 @@ commands:
     description: Вход по паролю
     usage: /login <пароль>
     aliases: [l]
+  apriv:
+    description: Управление админ-приватами
+    usage: /apriv <sethome|home|interact|delete|list|info|clear>
+  claim:
+    description: Создать админ-приват по выделению
+    usage: /claim <название>
+  wand:
+    description: Топор выделения (как //wand)
+    usage: /wand
+  expand:
+    description: Расширить выделение вверх/вниз
+    usage: /expand <число> up|down
 
 permissions:
   pveauction.auth.bypass:
@@ -66,8 +78,21 @@ permissions:
   pveauction.use:
     description: Аукцион и продажа
     default: true
+  pveauction.worldedit:
+    description: WorldEdit / FAWE (//set, //copy, …)
+    default: op
+    children:
+      worldedit.*: true
   pveauction.admin:
     description: Админка — креатив, выдача денег
+    default: op
+    children:
+      pveauction.worldedit: true
+  pveauction.apriv:
+    description: Админ-приваты — топор, create/delete, строить в зонах
+    default: op
+  pveauction.apriv.unlimited:
+    description: Без лимита числа приватов (при max-regions-per-player > 0)
     default: op
   pveauction.travel.rtp:
     description: Команда /rtp

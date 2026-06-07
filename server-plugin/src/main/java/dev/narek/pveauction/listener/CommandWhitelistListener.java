@@ -33,6 +33,11 @@ public final class CommandWhitelistListener implements Listener {
             return;
         }
         String message = event.getMessage().trim();
+        if (message.startsWith("//")
+                && (event.getPlayer().hasPermission("pveauction.worldedit")
+                || event.getPlayer().hasPermission("worldedit.*"))) {
+            return;
+        }
         if (!message.startsWith("/")) {
             return;
         }

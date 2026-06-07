@@ -77,6 +77,9 @@ public final class SpawnWorldListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        if (worlds.hasJoinRtpGrace(player)) {
+            return;
+        }
         if (!worlds.shouldAutoRtpOnSpawn(event.getFrom(), event.getTo())) {
             return;
         }
@@ -93,10 +96,12 @@ public final class SpawnWorldListener implements Listener {
         );
     }
 
-    @EventHandler
+    /** До сброса сессии в AuthListener (MONITOR). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         rtpCooldown.remove(player.getUniqueId());
+        worlds.clearJoinRtpGrace(player.getUniqueId());
 
         if (plugin.auth() != null && !plugin.auth().isLoggedIn(player)) {
             return;
@@ -109,14 +114,12 @@ public final class SpawnWorldListener implements Listener {
         var location = player.getLocation().clone();
         UUID uuid = player.getUniqueId();
         String name = player.getName();
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                plugin.players().getOrCreate(uuid, name);
-                plugin.players().saveLogoutLocation(uuid, location);
-            } catch (Exception e) {
-                plugin.getLogger().severe("Сохранение позиции: " + e.getMessage());
-            }
-        });
+        try {
+            plugin.players().getOrCreate(uuid, name);
+            plugin.players().saveLogoutLocation(uuid, location);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Сохранение позиции при выходе: " + e.getMessage());
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

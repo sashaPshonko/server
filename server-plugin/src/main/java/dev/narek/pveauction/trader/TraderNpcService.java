@@ -72,7 +72,7 @@ public final class TraderNpcService {
         Villager villager = loc.getWorld().spawn(loc, Villager.class, v -> {
             v.setAI(false);
             v.setSilent(true);
-            v.setInvulnerable(true);
+            v.setInvulnerable(false);
             v.setCollidable(true);
             v.setPersistent(true);
             v.setRemoveWhenFarAway(false);

@@ -8,6 +8,10 @@ import dev.narek.pveauction.command.RegisterCommand;
 import dev.narek.pveauction.listener.AuthListener;
 import dev.narek.pveauction.clan.ClanService;
 import dev.narek.pveauction.listener.ChatListener;
+import dev.narek.pveauction.command.AdminPrivCommand;
+import dev.narek.pveauction.command.ClaimCommand;
+import dev.narek.pveauction.command.ExpandCommand;
+import dev.narek.pveauction.command.WandCommand;
 import dev.narek.pveauction.command.AhAdminCommand;
 import dev.narek.pveauction.command.AhCommand;
 import dev.narek.pveauction.command.ClanCommand;
@@ -25,9 +29,12 @@ import dev.narek.pveauction.command.TpAcceptCommand;
 import dev.narek.pveauction.command.TpCommand;
 import dev.narek.pveauction.command.TpDenyCommand;
 import dev.narek.pveauction.gui.trader.TraderGuiListener;
+import dev.narek.pveauction.listener.ArmorLockpickListener;
 import dev.narek.pveauction.listener.StorageKeyListener;
+import dev.narek.pveauction.lockpick.armor.ArmorLockpickService;
 import dev.narek.pveauction.listener.TraderNpcListener;
 import dev.narek.pveauction.trader.TraderNpcService;
+import dev.narek.pveauction.db.AdminRegionRepository;
 import dev.narek.pveauction.db.ClanRepository;
 import dev.narek.pveauction.db.ShopRepository;
 import dev.narek.pveauction.gui.shop.ShopGuiListener;
@@ -44,8 +51,12 @@ import dev.narek.pveauction.economy.EconomyHookListener;
 import dev.narek.pveauction.gui.GuiListener;
 import dev.narek.pveauction.listener.CommandWhitelistListener;
 import dev.narek.pveauction.listener.SpawnItemCleanupTask;
+import dev.narek.pveauction.listener.AdminRegionProtectListener;
+import dev.narek.pveauction.listener.AdminRegionWandListener;
+import dev.narek.pveauction.listener.PlayerCollisionListener;
 import dev.narek.pveauction.listener.SpawnWorldListener;
 import dev.narek.pveauction.listener.TpRequestListener;
+import dev.narek.pveauction.region.AdminRegionService;
 import dev.narek.pveauction.travel.TeleportRequestService;
 import dev.narek.pveauction.world.WorldTravelService;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -74,6 +85,8 @@ public final class PveAuctionPlugin extends JavaPlugin {
     private DonateService donateService;
     private AuthRepository authRepository;
     private AuthService authService;
+    private AdminRegionRepository adminRegionRepository;
+    private AdminRegionService adminRegionService;
     private final Map<UUID, Long> lastRelistAt = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastAuctionPage = new ConcurrentHashMap<>();
 
@@ -124,6 +137,10 @@ public final class PveAuctionPlugin extends JavaPlugin {
         worldTravelService.refreshLocations();
         getServer().getScheduler().runTaskTimer(this, worldTravelService::ensureSpawnNight, 100L, 200L);
 
+        adminRegionRepository = new AdminRegionRepository(this);
+        adminRegionRepository.init();
+        adminRegionService = new AdminRegionService(this, adminRegionRepository, worldTravelService);
+
         long itemDespawnSec = getConfig().getLong("spawn-item-despawn-seconds", 60L);
         if (itemDespawnSec > 0) {
             int despawnSec = (int) Math.min(itemDespawnSec, Integer.MAX_VALUE / 20);
@@ -138,8 +155,16 @@ public final class PveAuctionPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
         getServer().getPluginManager().registerEvents(new ClanGuiListener(this, clanService), this);
         getServer().getPluginManager().registerEvents(new CommandWhitelistListener(authService), this);
-        getServer().getPluginManager().registerEvents(new AuthListener(this, authService), this);
+        getServer().getPluginManager().registerEvents(new PlayerCollisionListener(), this);
+        var armorLockpickService = new ArmorLockpickService(this);
+        getServer().getPluginManager().registerEvents(
+                new ArmorLockpickListener(this, armorLockpickService), this);
+        getServer().getPluginManager().registerEvents(
+                new AuthListener(this, authService, armorLockpickService), this);
         getServer().getPluginManager().registerEvents(new SpawnWorldListener(this), this);
+        getServer().getPluginManager().registerEvents(new AdminRegionWandListener(adminRegionService), this);
+        getServer().getPluginManager().registerEvents(
+                new AdminRegionProtectListener(this, adminRegionService, armorLockpickService), this);
 
         teleportRequestService = new TeleportRequestService(this);
         getServer().getPluginManager().registerEvents(new TpRequestListener(teleportRequestService), this);
@@ -151,7 +176,11 @@ public final class PveAuctionPlugin extends JavaPlugin {
         traderNpcService.start();
         getServer().getPluginManager().registerEvents(new TraderNpcListener(this, traderNpcService), this);
         getServer().getPluginManager().registerEvents(new TraderGuiListener(this), this);
-        getServer().getPluginManager().registerEvents(new StorageKeyListener(this), this);
+        getServer().getPluginManager().registerEvents(new StorageKeyListener(this, armorLockpickService), this);
+        getLogger().info(
+                "Отмычка к броне: ПКМ по кузнечному столу (SMITHING_TABLE) в мире "
+                        + getConfig().getString("spawn-world", "world")
+        );
 
         var ah = new AhCommand(this);
         var ahCmd = getCommand("ah");
@@ -205,7 +234,7 @@ public final class PveAuctionPlugin extends JavaPlugin {
             clanCmd.setTabCompleter(new ClanCommand(this, clanService));
         }
 
-        registerCmd("shop", new ShopCommand());
+        registerCmd("shop", new ShopCommand(this));
 
         var regCmd = getCommand("register");
         if (regCmd != null) {
@@ -229,11 +258,44 @@ public final class PveAuctionPlugin extends JavaPlugin {
             donate.setTabCompleter(donateCmd);
         }
 
-        getLogger().info("PveAuction v" + getDescription().getVersion()
-                + " — скупка, раскладка " + ShopSellMenu.LAYOUT_BUILD
+        var apriv = new AdminPrivCommand(adminRegionService);
+        var aprivCmd = getCommand("apriv");
+        if (aprivCmd != null) {
+            aprivCmd.setExecutor(apriv);
+            aprivCmd.setTabCompleter(apriv);
+        }
+
+        var wand = new WandCommand(adminRegionService);
+        var wandCmd = getCommand("wand");
+        if (wandCmd != null) {
+            wandCmd.setExecutor(wand);
+        }
+
+        var expand = new ExpandCommand(adminRegionService);
+        var expandCmd = getCommand("expand");
+        if (expandCmd != null) {
+            expandCmd.setExecutor(expand);
+            expandCmd.setTabCompleter(expand);
+        }
+
+        registerCmd("claim", new ClaimCommand(adminRegionService));
+
+        getLogger().info("PveAuction v" + getPluginMeta().getVersion()
                 + " | auth=" + getConfig().getBoolean("auth.enabled", true));
 
         getLogger().info("PveAuction: аукцион, кланы, донаты, /pay; база лотов " + maxActiveLotsBase() + "+донат.");
+        logWorldEditStatus();
+    }
+
+    private void logWorldEditStatus() {
+        var pm = getServer().getPluginManager();
+        if (pm.getPlugin("FastAsyncWorldEdit") != null) {
+            getLogger().info("WorldEdit: FastAsyncWorldEdit — команды // только с pveauction.worldedit / OP");
+        } else if (pm.getPlugin("WorldEdit") != null) {
+            getLogger().info("WorldEdit: WorldEdit — команды // только с pveauction.worldedit / OP");
+        } else {
+            getLogger().info("WorldEdit: не установлен (bash install-worldedit.sh в папке server)");
+        }
     }
 
     @Override
@@ -259,6 +321,13 @@ public final class PveAuctionPlugin extends JavaPlugin {
         if (authRepository != null) {
             authRepository.close();
         }
+        if (adminRegionRepository != null) {
+            adminRegionRepository.close();
+        }
+    }
+
+    public AdminRegionService adminRegions() {
+        return adminRegionService;
     }
 
     public AuthService auth() {

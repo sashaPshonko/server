@@ -38,8 +38,8 @@ public enum StorageKeyType {
                     .append(Component.text("Отмычка к броне", NamedTextColor.BLUE, TextDecoration.BOLD)),
             List.of(
                     Component.empty(),
-                    Component.text("Отмычка к хранилищу брони", NamedTextColor.GRAY),
-                    Component.text("ПКМ у точки хранилища брони", NamedTextColor.DARK_GRAY),
+                    Component.text("Случайная алмазная или незеритовая броня", NamedTextColor.GRAY),
+                    Component.text("ПКМ по кузнечному столу на спавне", NamedTextColor.DARK_GRAY),
                     Component.empty(),
                     Component.text("§b[§9отмычка§b]", NamedTextColor.DARK_GRAY)
             )

@@ -58,6 +58,18 @@ spawn-world: world
 rtp-world: rtp
 rtp-world-size: 1000
 
+# Админ-приваты: //wand или /wand → две точки → /expand N up|down → /claim <имя>
+admin-regions:
+  enabled: true
+  # false = приваты не блокируют спавн (торгаш, кузнечный стол, отмычки)
+  protect-spawn-world: false
+  rtp-world-only: true
+  wand-material: WOODEN_AXE
+  max-horizontal-area: 0
+  max-volume: 0
+  # 0 = без лимита; у OP есть pveauction.apriv.unlimited
+  max-regions-per-player: 0
+
 # Случайный RTP: отступ от границы мира и попыток найти землю
 rtp-border-margin: 40
 rtp-max-attempts: 40
@@ -84,7 +96,7 @@ spawn-rtp-cooldown-ticks: 40
 rtp-success-message: "Телепорт в случайное место мира."
 
 # Замедленное падение при /rtp и прыжке в яму на спавне (секунды, 0 = выкл)
-rtp-slow-falling-seconds: 25
+rtp-slow-falling-seconds: 10
 
 # /tp <ник> — запрос телепорта к игроку (принять кнопкой в чате)
 tp-request-timeout-seconds: 30
@@ -100,6 +112,17 @@ spawn-always-night: true
 
 # Дроп на спавне удаляется, если лежит дольше N секунд (0 = выключить)
 spawn-item-despawn-seconds: 60
+
+# Отмычка к броне: ПКМ по кузнечному столу на спавне
+lockpick:
+  armor:
+    diamond-chance: 0.5
+    thorns-chance: 0.35
+    diamond-extra-enchant-chance: 0.45
+    netherite-protection-5-chance: 0.5
+    netherite-prot5-body-bonus-chance: 0.5
+    netherite-thorned-extra-chance: 0.45
+    branch-pick-chance: 0.5
 
 # Торгаш на спавне (ПКМ — магазин отмычек за серебро)
 trader:

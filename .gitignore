@@ -7,6 +7,8 @@ logs/
 world/
 world_nether/
 world_the_end/
+rtp/
+backups/
 *.log
 session.lock
 public-host.txt

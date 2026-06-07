@@ -15,7 +15,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.SQLException;
+import org.bukkit.scheduler.BukkitTask;
+
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +29,7 @@ public final class AuthService {
     private final AuthRepository repository;
     private final Set<UUID> loggedIn = ConcurrentHashMap.newKeySet();
     private final Set<UUID> allowTeleport = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, BukkitTask> authTitleRefresh = new ConcurrentHashMap<>();
     private Location authLocation;
 
     public AuthService(PveAuctionPlugin plugin, AuthRepository repository) {
@@ -104,10 +108,16 @@ public final class AuthService {
 
     public void markLoggedIn(UUID uuid) {
         loggedIn.add(uuid);
+        stopAuthTitleRefresh(uuid);
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            player.clearTitle();
+        }
     }
 
     public void markLoggedOut(UUID uuid) {
         loggedIn.remove(uuid);
+        stopAuthTitleRefresh(uuid);
     }
 
     public void allowPluginTeleport(UUID uuid) {
@@ -175,16 +185,49 @@ public final class AuthService {
         Component subtitle = registered
                 ? Component.text("/login <пароль>  или  /l", NamedTextColor.YELLOW)
                 : Component.text("/reg <пароль>", NamedTextColor.YELLOW);
+        player.sendMessage(subtitle);
+        startAuthTitleRefresh(player, registered, subtitle);
+    }
+
+    private void showAuthTitle(Player player, Component subtitle) {
         player.showTitle(Title.title(
                 Component.text("Нужна авторизация", NamedTextColor.GOLD),
                 subtitle,
                 Title.Times.times(
-                        Duration.ofMillis(300),
-                        Duration.ofSeconds(8),
-                        Duration.ofMillis(500)
+                        Duration.ofMillis(200),
+                        Duration.ofSeconds(30),
+                        Duration.ofMillis(200)
                 )
         ));
-        player.sendMessage(subtitle);
+    }
+
+    /** Title не гаснет, пока игрок не вошёл. */
+    private void startAuthTitleRefresh(Player player, boolean registered, Component subtitle) {
+        UUID uuid = player.getUniqueId();
+        stopAuthTitleRefresh(uuid);
+        showAuthTitle(player, subtitle);
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline() || isLoggedIn(player)) {
+                    stopAuthTitleRefresh(uuid);
+                    if (player.isOnline()) {
+                        player.clearTitle();
+                    }
+                    cancel();
+                    return;
+                }
+                showAuthTitle(player, subtitle);
+            }
+        }.runTaskTimer(plugin, 100L, 100L);
+        authTitleRefresh.put(uuid, task);
+    }
+
+    private void stopAuthTitleRefresh(UUID uuid) {
+        BukkitTask task = authTitleRefresh.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
     }
 
     private void scheduleAuthTeleport(Player player, long delayTicks) {

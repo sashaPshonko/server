@@ -39,6 +39,12 @@ REMOTE_SCRIPT
 
 scp -o StrictHostKeyChecking=accept-new "${JAR}" "${REMOTE}:${REMOTE_DIR}/"
 
+FAWE_JAR=$(ls -1t "$(cd .. && pwd)/plugins"/FastAsyncWorldEdit-Paper-*.jar 2>/dev/null | head -1)
+if [[ -n "${FAWE_JAR}" && -f "${FAWE_JAR}" ]]; then
+  echo "FAWE: $(basename "${FAWE_JAR}")"
+  scp -o StrictHostKeyChecking=accept-new "${FAWE_JAR}" "${REMOTE}:${REMOTE_DIR}/"
+fi
+
 ssh "${REMOTE}" bash -s -- "${REMOTE_DIR}" "${SERVER_DIR}" "${JAR_NAME}" <<'REMOTE_SCRIPT'
 set -euo pipefail
 PLUGINS="$1"
@@ -66,4 +72,5 @@ echo "ОБЯЗАТЕЛЬНО: stop в консоли сервера, потом 
 REMOTE_SCRIPT
 
 echo ""
-echo "Готово. В игре: /shop — в чате «сборка 0.1.8», в заголовке «Скупка [0.1.8]»."
+echo "Готово. В игре: /shop — в чате и «Скупка [версия]» должна быть ${JAR_NAME#PveAuction-}"
+echo "       (версия без .jar, например 0.1.75). Потом stop → ./start.sh на VPS."

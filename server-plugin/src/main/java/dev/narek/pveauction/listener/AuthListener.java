@@ -2,6 +2,8 @@ package dev.narek.pveauction.listener;
 
 import dev.narek.pveauction.PveAuctionPlugin;
 import dev.narek.pveauction.auth.AuthService;
+import dev.narek.pveauction.lockpick.armor.ArmorLockpickInteract;
+import dev.narek.pveauction.lockpick.armor.ArmorLockpickService;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -29,10 +31,16 @@ public final class AuthListener implements Listener {
 
     private final PveAuctionPlugin plugin;
     private final AuthService auth;
+    private final ArmorLockpickService armorLockpick;
 
     public AuthListener(PveAuctionPlugin plugin, AuthService auth) {
+        this(plugin, auth, new ArmorLockpickService(plugin));
+    }
+
+    public AuthListener(PveAuctionPlugin plugin, AuthService auth, ArmorLockpickService armorLockpick) {
         this.plugin = plugin;
         this.auth = auth;
+        this.armorLockpick = armorLockpick;
     }
 
     @EventHandler
@@ -40,7 +48,8 @@ public final class AuthListener implements Listener {
         auth.handleJoin(event.getPlayer());
     }
 
-    @EventHandler
+    /** После сохранения позиции выхода (SpawnWorldListener, HIGH). */
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onQuit(PlayerQuitEvent event) {
         auth.markLoggedOut(event.getPlayer().getUniqueId());
     }
@@ -132,11 +141,18 @@ public final class AuthListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
-        if (!auth.isLoggedIn(event.getPlayer())) {
-            event.setCancelled(true);
+        if (auth.isLoggedIn(event.getPlayer())) {
+            return;
         }
+        if (ArmorLockpickInteract.isSmithingTableAttempt(event, plugin, armorLockpick)) {
+            return;
+        }
+        if (event.isCancelled()) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -153,11 +169,21 @@ public final class AuthListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInventoryOpen(InventoryOpenEvent event) {
-        if (event.getPlayer() instanceof Player player && !auth.isLoggedIn(player)) {
-            event.setCancelled(true);
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
         }
+        if (auth.isLoggedIn(player)) {
+            return;
+        }
+        if (ArmorLockpickInteract.isSmithingTableOpen(event, plugin, armorLockpick, player)) {
+            return;
+        }
+        if (event.isCancelled()) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
